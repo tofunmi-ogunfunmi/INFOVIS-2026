@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Material Risk of Solid-State Batteries</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="masthead-text">
+      <div class="kicker">INFO 247 Spring 2026 by Scarlett Xu &amp; Tofunmi Ogunfunmi</div>
+      <h1>The Material Risk of<br><em>Solid-State Batteries</em></h1>
+      <p class="dek">Solid-state batteries with solid-state electrolytes promise safer, denser energy storage. But every candidate electrolyte chemistry depends on a different supply chain. This is a story about where those materials come from, who controls them, and what that means for the next generation of electric vehicles.</p>
+      <div class="scroll-cue">Scroll ↓</div>
+    </div>
+    <div class="masthead-image">
+     <img src="battery-scale.svg" alt="Battery scale">
+    </div>
+  </div>
+</header>
+
+
+<!-- SECTION 1: THE HOOK -->
+<section class="section" id="hook">
+  <div class="section-head">
+    <div class="section-number">01</div>
+    <h2>Battery demand is increasing.</h2>
+    <p class="lede">Global battery demand has more than <strong>quintupled since 2020</strong>, driven almost entirely by the adoption electric vehicles. China accounts for the majority of that growth.</p>
+  </div>
+  <figure class="chart-wrap">
+    <div id="chart-demand"></div>
+    <figcaption>Source: IEA Global EV Outlook 2025, historical battery demand for EVs (GWh).</figcaption>
+  </figure>
+</section>
+
+<!-- SECTION 2: CONTEXT -->
+<section class="section section-dark" id="context">
+  <div class="section-head">
+    <div class="section-number">02</div>
+    <h2>But which battery?</h2>
+    <p class="lede"> A "solid-state electrolyte" isn't one technology, it's at least three competing chemistries, each built on a different electrolyte material. The choice isn't just technical. It rewrites the entire supply chain.</p>
+  </div>
+  <div class="chem-grid">
+    <article class="chem-card chem-oxide">
+      <div class="chem-tag">OXIDE-BASED (e.g. LLZO) </div>
+      <h3>Li · Lanthanum · Zirconium</h3>
+      <p>High stability and wide voltage window. But lanthanum is a rare earth, and rare earth production is <strong>the most geographically concentrated</strong> supply chain of the five.</p>
+      <ul class="chem-uses">
+        <li><span class="use-icon">🔋</span><span><strong>Lithium</strong> — also in smartphone batteries, psychiatric medication (lithium carbonate), and ceramics</span></li>
+        <li><span class="use-icon">🔭</span><span><strong>Lanthanum</strong> — also in camera and telescope lenses, hydrogen storage alloys, and EV motor magnets</span></li>
+        <li><span class="use-icon">✈️</span><span><strong>Zirconium</strong> — also in nuclear reactor cladding, jet engine coatings, and ceramic knives</span></li>
+      </ul>
+    </article>
+    <article class="chem-card chem-sulfide">
+      <div class="chem-tag">SULFIDE-BASED (e.g. Li₆PS₅Cl)</div>
+      <h3>Li · Sulfur · Phosphate</h3>
+      <p>Highest ionic conductivity. Sulfur and phosphate are the <strong>most geographically distributed</strong> inputs, drawn from dozens of producing countries.</p>
+      <ul class="chem-uses">
+        <li><span class="use-icon">🔋</span><span><strong>Lithium</strong> — also in smartphone batteries, psychiatric medication, and ceramics</span></li>
+        <li><span class="use-icon">🌋</span><span><strong>Sulfur</strong> — also in fertilizers, rubber vulcanization, gunpowder, and pharmaceutical production</span></li>
+        <li><span class="use-icon">🌾</span><span><strong>Phosphate</strong> — also in crop fertilizers (feeds ~half the world's population), detergents, and food preservatives</span></li>
+      </ul>
+    </article>
+    <article class="chem-card chem-phosphate">
+      <div class="chem-tag">PHOSPHATE-BASED (LAGP)</div>
+      <h3>Li · Aluminum · Germanium · Phosphate</h3>
+      <p>A middle ground. Phosphate is well-distributed, but germanium introduce <strong>significant concentration risk</strong>.</p>
+      <ul class="chem-uses">
+        <li><span class="use-icon">🔋</span><span><strong>Lithium</strong> — also in smartphone batteries, psychiatric medication, and ceramics</span></li>
+        <li><span class="use-icon">✈️</span><span><strong>Aluminum</strong> — also in aircraft fuselages, beverage cans, window frames, and foil wrap</span></li>
+        <li><span class="use-icon">💻</span><span><strong>Germanium</strong> — also in fiber optic cables, infrared night-vision equipment, and solar panels</span></li>
+        <li><span class="use-icon">🌾</span><span><strong>Phosphate</strong> — also in crop fertilizers, detergents, and food preservatives</span></li>
+      </ul>
+    </article>
+  </div>
+</section>
+
+<!-- SECTION 3: FLOW MAP -->
+<section class="section" id="map">
+  <div class="section-head">
+    <div class="section-number">03</div>
+    <h2>Where the materials actually come from.</h2>
+    <p class="lede">Each material tells a different geographic story. Use the controls below to see where each SSE input is mined, and how concentrated that production is in 2024.</p>
+  </div>
+  <div class="map-controls" id="map-controls"></div>
+  <figure class="chart-wrap chart-wrap-wide">
+    <div id="chart-map"></div>
+    <figcaption id="map-caption">Hover a country to see its share. Percentages show the country's share of global 2024 production of the selected material. Source: USGS Mineral Commodity Summaries 2025.</figcaption>
+  </figure>
+</section>
+
+<!-- SECTION 4: RISK COMPARISON -->
+<section class="section section-dark" id="risk">
+  <div class="section-head">
+    <div class="section-number">04</div>
+    <h2>What is the concentration risk?</h2>
+    <p class="lede">The <strong>Herfindahl–Hirschman Index</strong> (HHI) is the standard measure of market concentration. Higher means fewer countries control more of the supply. A score above 2,500 is considered "highly concentrated." Rare earths clear that bar by nearly double.</p>
+  </div>
+  <figure class="chart-wrap">
+    <div id="chart-risk"></div>
+    <figcaption>Each material plotted by number of producing countries (x-axis) against HHI concentration score (y-axis). Bubble size reflects 2024 global production volume.</figcaption>
+  </figure>
+</section>
+
+<!-- SECTION 5: PRICE TRENDS -->
+<section class="section" id="prices">
+  <div class="section-head">
+    <div class="section-number">05</div>
+    <h2>A decade of price changes.</h2>
+    <p class="lede">Over the last decade, rare earth prices collapsed by more than 80% as Chinese production scaled up. Sulfur swung wildly. Lithium doubled. Each of these moves can reshape which battery chemistry is commercially viable for the timeframe.</p>
+  </div>
+  <div class="price-toggle" id="price-toggle">
+    <button class="pt-btn active" data-mode="absolute">Absolute price ($/t)</button>
+    <button class="pt-btn" data-mode="normalized">% change from 2012</button>
+  </div>
+  <figure class="chart-wrap">
+    <div id="chart-prices"></div>
+    <figcaption>Annual unit values, 2012–2022. Source: USGS Historical Statistics (Data Series 140) and annual Mineral Commodity Summaries.</figcaption>
+  </figure>
+</section>
+
+<!-- SECTION 6: CALCULATOR -->
+<section class="section section-accent" id="calc">
+  <div class="section-head">
+    <div class="section-number">06</div>
+    <h2>Build your own battery.</h2>
+    <p class="lede">Pick an electrolyte chemistry. We'll compute a composite supply-chain risk score from the underlying materials and pair it with the <strong>typical ionic conductivity</strong> of real materials in that family, drawn from 599 experimentally measured solid electrolytes.</p>
+  </div>
+  <div class="calc-grid">
+    <div class="calc-controls">
+      <label class="calc-label">Choose a chemistry:</label>
+      <div class="chem-picker" id="chem-picker"></div>
+      <div class="calc-weights" id="calc-weights"></div>
+    </div>
+    <div class="calc-output" id="calc-output"></div>
+  </div>
+</section>
+
+<!-- SECTION 7: TAKEAWAY -->
+<section class="section section-takeaway">
+  <div class="section-head">
+    <div class="section-number">07</div>
+    <h2>What this means.</h2>
+  </div>
+  <div class="takeaway-body">
+    <p>There is no "clean" solid-state chemistry, supply-chain-wise. Every path forward trades one kind of risk for another.</p>
+    <p><strong>Sulfide electrolytes</strong> are the safest bet on geographic diversity, sulfur and phosphate are produced almost everywhere. But they come with processing challenges this visualization doesn't capture.</p>
+    <p><strong>Oxide electrolytes</strong> buy chemical stability at the cost of deep dependence on Chinese rare earth production, a dependence that has already triggered export controls.</p>
+    <p>As EV demand climbs, material choices made in battery labs today will determine which countries hold pricing power for decades. This dashboard is a starting point for asking better questions about those choices.</p>
+  </div>
+  <footer class="colophon">
+    <div>Data: IEA Global EV Outlook 2025 · USGS Mineral Commodity Summaries 2025 · USGS Data Series 140 · OBELiX dataset (Therrien et al. 2025)</div>
+  </footer>
+</section>
+
+<script src="vendor/d3.min.js"></script>
+<script src="vendor/topojson-client.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

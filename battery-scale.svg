@@ -1,0 +1,27 @@
+<svg width="100%" viewBox="0 0 680 400" role="img" xmlns="http://www.w3.org/2000/svg">
+  <title>Battery supply chain risk scale</title>
+  <desc>A balance scale showing high risk battery on the left tilting down, and lower risk battery on the right tilting up</desc>
+  <style>
+    .label-high { font-family: "JetBrains Mono", monospace; font-size: 13px; font-weight: 600; fill: #b5482c; letter-spacing: 0.08em; }
+    .label-low  { font-family: "JetBrains Mono", monospace; font-size: 13px; font-weight: 600; fill: #5b8c5a; letter-spacing: 0.08em; }
+  </style>
+  <circle cx="340" cy="148" r="10" fill="#5a5f64"/>
+  <rect x="337" y="148" width="6" height="140" fill="#9ea3a8" rx="3"/>
+  <rect x="290" y="285" width="100" height="12" fill="#9ea3a8" rx="4"/>
+  <rect x="310" y="295" width="60" height="6" fill="#d8d2c3" rx="3"/>
+  <line x1="120" y1="185" x2="560" y2="111" stroke="#5a5f64" stroke-width="5" stroke-linecap="round"/>
+  <line x1="165" y1="179" x2="165" y2="220" stroke="#9ea3a8" stroke-width="2"/>
+  <line x1="515" y1="118" x2="515" y2="158" stroke="#9ea3a8" stroke-width="2"/>
+  <rect x="120" y="220" width="90" height="110" rx="6" fill="#f5efe6" stroke="#b5482c" stroke-width="2"/>
+  <rect x="148" y="212" width="34" height="10" rx="3" fill="#b5482c"/>
+  <rect x="132" y="234" width="66" height="16" rx="2" fill="#e8c4b4"/>
+  <rect x="132" y="256" width="66" height="16" rx="2" fill="#d4896a"/>
+  <rect x="132" y="278" width="66" height="16" rx="2" fill="#b5482c"/>
+  <rect x="470" y="158" width="90" height="110" rx="6" fill="#f0f5f0" stroke="#5b8c5a" stroke-width="2"/>
+  <rect x="498" y="150" width="34" height="10" rx="3" fill="#5b8c5a"/>
+  <rect x="482" y="172" width="66" height="16" rx="2" fill="#b8d4b4"/>
+  <rect x="482" y="194" width="66" height="16" rx="2" fill="#7dac7a"/>
+  <rect x="482" y="216" width="66" height="16" rx="2" fill="#5b8c5a"/>
+  <text x="165" y="355" text-anchor="middle" class="label-high">HIGH RISK</text>
+  <text x="515" y="293" text-anchor="middle" class="label-low">LOWER RISK</text>
+</svg>
