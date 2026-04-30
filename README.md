@@ -1,4 +1,4 @@
-# The Hidden Geography of Solid-State Batteries
+# The Material Risk of Solid-State Batteries
 
 INFO 247 Final Project · UC Berkeley I School · Spring 2026
 Scarlett Xu & Tofunmi Ogunfunmi
