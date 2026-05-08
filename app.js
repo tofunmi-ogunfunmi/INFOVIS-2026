@@ -638,43 +638,43 @@ function drawPrices(prices) {
 
   render("absolute");
 
-  // // Draw annotations after first render
-  // function drawAnnotations(mode) {
-  //   annotG.selectAll("*").remove();
-  //   const y = mode === "absolute" ? yAbs : yNorm;
-  //   const src = mode === "absolute" ? byMat : byMatNorm;
+  // Draw annotations after first render
+  function drawAnnotations(mode) {
+    annotG.selectAll("*").remove();
+    const y = mode === "absolute" ? yAbs : yNorm;
+    const src = mode === "absolute" ? byMat : byMatNorm;
 
-  //   ANNOTATIONS.forEach(ann => {
-  //     const matData = src.get(ann.mat);
-  //     if (!matData) return;
-  //     const row = matData.find(r => r.year === ann.year);
-  //     if (!row || isNaN(row.value)) return;
-  //     if (mode === "absolute" && row.value <= 0) return;
+    ANNOTATIONS.forEach(ann => {
+      const matData = src.get(ann.mat);
+      if (!matData) return;
+      const row = matData.find(r => r.year === ann.year);
+      if (!row || isNaN(row.value)) return;
+      if (mode === "absolute" && row.value <= 0) return;
 
-  //     const cx = x(ann.year);
-  //     const cy = y(row.value);
-  //     const above = ann.side === "above";
-  //     const color = MATERIAL_COLORS[ann.mat];
+      const cx = x(ann.year);
+      const cy = y(row.value);
+      const above = ann.side === "above";
+      const color = MATERIAL_COLORS[ann.mat];
 
-  //     // Dot on line
-  //     annotG.append("circle")
-  //       .attr("cx", cx).attr("cy", cy).attr("r", 4)
-  //       .attr("fill", color).attr("stroke", "#fff").attr("stroke-width", 1.5);
+      // Dot on line
+      annotG.append("circle")
+        .attr("cx", cx).attr("cy", cy).attr("r", 4)
+        .attr("fill", color).attr("stroke", "#fff").attr("stroke-width", 1.5);
 
-  //     // Tick line
-  //     annotG.append("line")
-  //       .attr("x1", cx).attr("x2", cx)
-  //       .attr("y1", cy).attr("y2", above ? cy - 22 : cy + 22)
-  //       .attr("stroke", color).attr("stroke-width", 1).attr("stroke-dasharray", "3,2");
+      // Tick line
+      annotG.append("line")
+        .attr("x1", cx).attr("x2", cx)
+        .attr("y1", cy).attr("y2", above ? cy - 22 : cy + 22)
+        .attr("stroke", color).attr("stroke-width", 1).attr("stroke-dasharray", "3,2");
 
-  //     // Label
-  //     annotG.append("text")
-  //       .attr("x", cx).attr("y", above ? cy - 26 : cy + 34)
-  //       .attr("text-anchor", "middle")
-  //       .attr("font-family", "Inter, sans-serif")
-  //       .attr("font-size", 11).attr("fill", color)
-  //       .attr("font-style", "italic")
-  //       .text(ann.text);
+      // Label
+      annotG.append("text")
+        .attr("x", cx).attr("y", above ? cy - 26 : cy + 34)
+        .attr("text-anchor", "middle")
+        .attr("font-family", "Inter, sans-serif")
+        .attr("font-size", 11).attr("fill", color)
+        .attr("font-style", "italic")
+        .text(ann.text);
     });
   }
 
