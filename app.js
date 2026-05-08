@@ -518,7 +518,8 @@ function drawRisk(hhi, production) {
 
   // Gridlines
   g.append("g").attr("class","grid")
-    .call(d3.axisLeft(y).ticks(6).tickSize(-iw).tickFormat(""));
+    .call(d3.axisLeft(y).ticks(6).tickSize(-iw).tickFormat(""))
+    .attr("fill", "#f5efe0");
 
   // Axes
   g.append("g").attr("class","axis")
