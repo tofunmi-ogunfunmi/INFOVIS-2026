@@ -620,24 +620,6 @@ function drawRisk(hhi, production) {
     .attr("letter-spacing", "0.1em")
     .text("LOW CONCENTRATION RISK");
 
-   // Bubble size legend
-  const legendG = g.append("g")
-    .attr("transform", `translate(${iw - 120}, ${ih - 80})`);
-
-  legendG.append("text")
-    .attr("x", 0).attr("y", -8)
-    .attr("font-family", "JetBrains Mono, monospace")
-    .attr("font-size", 10)
-    .attr("fill", "#9ea3a8")
-    .attr("letter-spacing", "0.08em")
-    .text("BUBBLE SIZE");
-
-  legendG.append("text")
-    .attr("x", 0).attr("y", 6)
-    .attr("font-family", "Inter, sans-serif")
-    .attr("font-size", 11)
-    .attr("fill", "#9ea3a8")
-    .text("= 2024 global production volume");
 }
 
 /* ============================================================
