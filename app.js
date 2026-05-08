@@ -227,7 +227,6 @@ function drawMap(production, world) {
 
   // State
   let currentMaterial = MATERIAL_ORDER[0];
-  let flowsVisible = false;
 
   // --- Material selector buttons ---
   const controls = d3.select("#map-controls");
@@ -240,23 +239,8 @@ function drawMap(production, world) {
         d3.select(this).classed("active", true);
         currentMaterial = m;
         updateChoropleth(m);
-        if (flowsVisible) drawFlows(m);
       });
   });
-
-  // --- Flow toggle button ---
-  const flowBtn = controls.append("button")
-    .attr("class", "mc-btn mc-btn-flow")
-    .html(`<span style="margin-right:6px;">⇢</span>Show flows`)
-    .on("click", function() {
-      flowsVisible = !flowsVisible;
-      d3.select(this).classed("active", flowsVisible)
-        .html(flowsVisible
-          ? `<span style="margin-right:6px;">⇢</span>Hide flows`
-          : `<span style="margin-right:6px;">⇢</span>Show flows`);
-      if (flowsVisible) drawFlows(currentMaterial);
-      else clearFlows();
-    });
 
   // --- SVG layers ---
   // Ocean
@@ -276,34 +260,6 @@ function drawMap(production, world) {
     .attr("stroke", "#d8d2c3")
     .attr("stroke-width", 0.5);
 
-  // Flow arcs layer — sits above countries, below labels
-  const gFlows = svg.append("g").attr("class", "flow-layer");
-
-  // Demand hub dots layer
-  const gHubs = svg.append("g").attr("class", "hub-layer");
-
-  // Disclaimer badge — hidden until flows shown
-  const badge = svg.append("g")
-    .attr("class", "flow-badge")
-    .attr("transform", `translate(${W - 14}, 14)`)
-    .attr("opacity", 0);
-
-  badge.append("rect")
-    .attr("x", -220).attr("y", 0)
-    .attr("width", 220).attr("height", 28)
-    .attr("rx", 3)
-    .attr("fill", "#1a1e21")
-    .attr("opacity", 0.82);
-
-  badge.append("text")
-    .attr("x", -110).attr("y", 18)
-    .attr("text-anchor", "middle")
-    .attr("font-family", "JetBrains Mono, monospace")
-    .attr("font-size", 10)
-    .attr("letter-spacing", "0.06em")
-    .attr("fill", "#e6b34a")
-    .text("⚠ FLOWS ARE ILLUSTRATIVE — NOT TRADE DATA");
-
   // Legend
   const legendG = svg.append("g").attr("transform", `translate(${W - 220}, ${H - 70})`);
   legendG.append("text")
@@ -315,19 +271,6 @@ function drawMap(production, world) {
 
   const legendW = 200, legendH = 10;
   const defs = svg.append("defs");
-
-  // Add CSS animation for dash flow
-  const style = document.createElement("style");
-  style.textContent = `
-    @keyframes flowDash {
-      from { stroke-dashoffset: 30; }
-      to   { stroke-dashoffset: 0; }
-    }
-    .flow-arc {
-      animation: flowDash 1.2s linear infinite;
-    }
-  `;
-  document.head.appendChild(style);
 
   // --- Choropleth update ---
   function updateChoropleth(material) {
@@ -390,86 +333,6 @@ function drawMap(production, world) {
       .text(`${max.toFixed(0)}%`);
   }
 
-  // --- Flow drawing ---
-  function project([lon, lat]) {
-    return projection([lon, lat]);
-  }
-
-  // Great-circle-ish arc: control point pulled toward the pole for a natural curve
-  function arcPath(src, dst) {
-    const [x1, y1] = src;
-    const [x2, y2] = dst;
-    const mx = (x1 + x2) / 2;
-    const my = (y1 + y2) / 2 - Math.hypot(x2 - x1, y2 - y1) * 0.25;
-    return `M${x1},${y1} Q${mx},${my} ${x2},${y2}`;
-  }
-
-  function drawFlows(material) {
-    clearFlows();
-    badge.transition().duration(300).attr("opacity", 1);
-
-    const rows = production
-      .filter(p => p.material === material)
-      .sort((a, b) => b.share - a.share)
-      .slice(0, 3);
-
-    const maxShare = rows[0]?.share || 1;
-    const matColor = MATERIAL_COLORS[material];
-
-    // Just simple text labels for demand hubs — no dots or rings
-    DEMAND_HUBS.forEach(hub => {
-      const [hx, hy] = project([hub.lon, hub.lat]);
-      if (!hx || !hy) return;
-      gHubs.append("text")
-        .attr("class", "hub-dot")
-        .attr("x", hx).attr("y", hy - 6)
-        .attr("text-anchor", "middle")
-        .attr("font-family", "Inter, sans-serif")
-        .attr("font-size", 12)
-        .attr("font-weight", 600)
-        .attr("fill", "#1a1e21")
-        .text(hub.name);
-    });
-
-    // Arcs only — uniform thickness
-    rows.forEach((row, ri) => {
-      const coords = CENTROIDS[row.country];
-      if (!coords) return;
-      const src = project(coords);
-      if (!src || !src[0]) return;
-
-      DEMAND_HUBS.forEach((hub, hi) => {
-        const dst = project([hub.lon, hub.lat]);
-        if (!dst || !dst[0]) return;
-
-        const dist = Math.hypot(src[0] - dst[0], src[1] - dst[1]);
-        if (dist < 20) return;
-
-        const delay = (ri * DEMAND_HUBS.length + hi) * 80;
-
-        gFlows.append("path")
-          .attr("class", "flow-arc")
-          .attr("d", arcPath(src, dst))
-          .attr("fill", "none")
-          .attr("stroke", matColor)
-          .attr("stroke-width", 1.5)
-          .attr("stroke-opacity", 0.5)
-          .attr("stroke-dasharray", "8 4")
-          .attr("stroke-linecap", "round")
-          .style("animation-delay", `${delay}ms`)
-          .attr("opacity", 0)
-          .transition().delay(delay).duration(400)
-          .attr("opacity", 1);
-      });
-    });
-  }
-
-  function clearFlows() {
-    gFlows.selectAll("*").remove();
-    gHubs.selectAll("*").remove();
-    badge.transition().duration(200).attr("opacity", 0);
-  }
-
   updateChoropleth(MATERIAL_ORDER[0]);
 }
 
@@ -500,33 +363,46 @@ function drawRisk(hhi, production) {
 
   const x = d3.scaleLinear().domain([0, 28]).range([0, iw]);
   const y = d3.scaleLinear().domain([0, 5500]).range([ih, 0]);
-  const r = d3.scaleSqrt().domain([0, d3.max(data, d => d.total)]).range([6, 32]);
+  const FIXED_R = 22; // all bubbles same size
 
-  // High-risk / low-risk zones
+  // Three risk zones — high / moderate / low
   g.append("rect")
     .attr("x", 0).attr("y", 0)
     .attr("width", iw).attr("height", y(2500))
-    .attr("fill", "#b5482c").attr("opacity", 0.06);
+    .attr("fill", "#b5482c").attr("opacity", 0.12);
+  g.append("rect")
+    .attr("x", 0).attr("y", y(2500))
+    .attr("width", iw).attr("height", y(1500) - y(2500))
+    .attr("fill", "#e6b34a").attr("opacity", 0.10);
   g.append("rect")
     .attr("x", 0).attr("y", y(1500))
     .attr("width", iw).attr("height", ih - y(1500))
-    .attr("fill", "#5b8c5a").attr("opacity", 0.06);
+    .attr("fill", "#5b8c5a").attr("opacity", 0.12);
 
-  // Threshold line at HHI=2500 (standard "highly concentrated")
+  // Threshold lines
   g.append("line")
     .attr("x1", 0).attr("x2", iw)
     .attr("y1", y(2500)).attr("y2", y(2500))
     .attr("stroke", "#b5482c")
     .attr("stroke-dasharray", "4,4")
-    .attr("stroke-width", 1);
-
+    .attr("stroke-width", 1.5);
   g.append("text")
     .attr("x", 5).attr("y", y(2500) - 6)
-    .attr("text-anchor", "start")
     .attr("font-family", "JetBrains Mono, monospace")
-    .attr("font-size", 14)
-    .attr("fill", "#b5482c")
-    .text("HHI = 2,500 · highly concentrated threshold");
+    .attr("font-size", 11).attr("fill", "#b5482c")
+    .text("2,500 · highly concentrated");
+
+  g.append("line")
+    .attr("x1", 0).attr("x2", iw)
+    .attr("y1", y(1500)).attr("y2", y(1500))
+    .attr("stroke", "#5b8c5a")
+    .attr("stroke-dasharray", "4,4")
+    .attr("stroke-width", 1.5);
+  g.append("text")
+    .attr("x", 5).attr("y", y(1500) - 6)
+    .attr("font-family", "JetBrains Mono, monospace")
+    .attr("font-size", 11).attr("fill", "#5b8c5a")
+    .text("1,500 · moderately concentrated");
 
   // Gridlines
   g.append("g").attr("class","grid")
@@ -567,29 +443,28 @@ function drawRisk(hhi, production) {
     .attr("cy", d => y(d.hhi))
     .attr("r", 0)
     .attr("fill", d => d.color)
-    .attr("fill-opacity", 0.75)
+    .attr("fill-opacity", 0.80)
     .attr("stroke", d => d.color)
     .attr("stroke-width", 1.5)
     .on("mouseenter", function(event, d) {
       d3.select(this).attr("fill-opacity", 1);
       showTip(`<strong>${d.material}</strong>
                HHI: <span class="tt-mono">${d3.format(",")(d.hhi)}</span><br>
-               Producing countries: ${d.producers}<br>
-               2024 world total: ${d3.format(",")(d.total)} t`, event);
+               Producing countries: ${d.producers}`, event);
     })
     .on("mousemove", moveTip)
     .on("mouseleave", function() {
-      d3.select(this).attr("fill-opacity", 0.75);
+      d3.select(this).attr("fill-opacity", 0.80);
       hideTip();
     })
     .transition().duration(900).delay((d,i) => i * 120)
-    .attr("r", d => r(d.total));
+    .attr("r", FIXED_R);
 
   // Per-material label placement to avoid bubble/line collisions.
   // "above" = above bubble; "below" = below bubble; offset tweaks horizontal.
   const LABEL_POS = {
     "Rare Earths (La, Y)": { side: "above", dx: 0 },
-    "Phosphate (P)":       { side: "below", dx: 0 },
+    "Phosphate (P)":       { side: "below", dx: -30 },
     "Lithium (Li)":        { side: "above", dx: -20 },
     "Zirconium (Zr)":      { side: "below", dx: 22 },
     "Sulfur (S)":          { side: "above", dx: 0 }
@@ -599,37 +474,40 @@ function drawRisk(hhi, production) {
     .attr("x", d => x(d.producers) + (LABEL_POS[d.material]?.dx || 0))
     .attr("y", d => {
       const pos = LABEL_POS[d.material] || { side: "above" };
-      const rad = r(d.total);
-      // const rad = 10;
-      return pos.side === "above" ? y(d.hhi) - rad - 8 : y(d.hhi) + rad + 18;
+      return pos.side === "above" ? y(d.hhi) - FIXED_R - 8 : y(d.hhi) + FIXED_R + 18;
     })
     .attr("text-anchor", "middle")
     .attr("font-family", "Fraunces, serif")
     .attr("font-weight", 600)
     .attr("font-size", 16)
-    //.attr("fill", "#e9e4d7")
     .attr("fill", d => MATERIAL_COLORS[d.material])
     .text(d => d.material)
     .attr("opacity", 0)
     .transition().delay(1200).duration(400).attr("opacity", 1);
 
-  // Zone labels
   g.append("text")
-    .attr("x", 16).attr("y", 20)
+    .attr("x", iw - 16).attr("y", 20)
+    .attr("text-anchor", "end")
     .attr("font-family", "JetBrains Mono, monospace")
-    .attr("font-size", 14)
-    .attr("fill", "#b5482c")
+    .attr("font-size", 12).attr("fill", "#b5482c")
     .attr("letter-spacing", "0.1em")
-    .text("HIGH CONCENTRATION RISK");
+    .text("HIGH RISK");
+
+  g.append("text")
+    .attr("x", iw - 16).attr("y", y(2000))
+    .attr("text-anchor", "end")
+    .attr("font-family", "JetBrains Mono, monospace")
+    .attr("font-size", 12).attr("fill", "#c8893a")
+    .attr("letter-spacing", "0.1em")
+    .text("MODERATE RISK");
 
   g.append("text")
     .attr("x", iw - 16).attr("y", ih - 14)
     .attr("text-anchor", "end")
     .attr("font-family", "JetBrains Mono, monospace")
-    .attr("font-size", 14)
-    .attr("fill", "#5b8c5a")
+    .attr("font-size", 12).attr("fill", "#5b8c5a")
     .attr("letter-spacing", "0.1em")
-    .text("LOW CONCENTRATION RISK");
+    .text("LOW RISK");
 }
 
 /* ============================================================
@@ -685,6 +563,15 @@ function drawPrices(prices) {
 
   const linesG = g.append("g");
   const labelsG = g.append("g");
+  const annotG = g.append("g"); // annotations layer on top
+
+  // Key event annotations — drawn once, shown in both modes via opacity
+  const ANNOTATIONS = [
+    { year: 2014, mat: "Rare Earths (La, Y)", text: "China scales up production", side: "below" },
+    { year: 2018, mat: "Lithium (Li)",         text: "EV boom drives lithium surge", side: "above" },
+    { year: 2020, mat: "Sulfur (S)",           text: "COVID demand shock", side: "below" },
+    { year: 2016, mat: "Phosphate (P)",        text: "Morocco expands capacity", side: "above" }
+  ];
 
   function render(mode) {
     const y = mode === "absolute" ? yAbs : yNorm;
@@ -751,10 +638,53 @@ function drawPrices(prices) {
 
   render("absolute");
 
+  // Draw annotations after first render
+  function drawAnnotations(mode) {
+    annotG.selectAll("*").remove();
+    const y = mode === "absolute" ? yAbs : yNorm;
+    const src = mode === "absolute" ? byMat : byMatNorm;
+
+    ANNOTATIONS.forEach(ann => {
+      const matData = src.get(ann.mat);
+      if (!matData) return;
+      const row = matData.find(r => r.year === ann.year);
+      if (!row || isNaN(row.value)) return;
+      if (mode === "absolute" && row.value <= 0) return;
+
+      const cx = x(ann.year);
+      const cy = y(row.value);
+      const above = ann.side === "above";
+      const color = MATERIAL_COLORS[ann.mat];
+
+      // Dot on line
+      annotG.append("circle")
+        .attr("cx", cx).attr("cy", cy).attr("r", 4)
+        .attr("fill", color).attr("stroke", "#fff").attr("stroke-width", 1.5);
+
+      // Tick line
+      annotG.append("line")
+        .attr("x1", cx).attr("x2", cx)
+        .attr("y1", cy).attr("y2", above ? cy - 22 : cy + 22)
+        .attr("stroke", color).attr("stroke-width", 1).attr("stroke-dasharray", "3,2");
+
+      // Label
+      annotG.append("text")
+        .attr("x", cx).attr("y", above ? cy - 26 : cy + 34)
+        .attr("text-anchor", "middle")
+        .attr("font-family", "Inter, sans-serif")
+        .attr("font-size", 11).attr("fill", color)
+        .attr("font-style", "italic")
+        .text(ann.text);
+    });
+  }
+
+  drawAnnotations("absolute");
+
   d3.selectAll("#price-toggle .pt-btn").on("click", function() {
     d3.selectAll("#price-toggle .pt-btn").classed("active", false);
     d3.select(this).classed("active", true);
     render(this.dataset.mode);
+    drawAnnotations(this.dataset.mode);
   });
 }
 
@@ -858,18 +788,24 @@ function drawCalculator(hhi, conductivity) {
     const compHHI = d3.sum(Object.entries(normWeights)
       .map(([mat, w]) => w * hhiMap.get(mat)));
 
-    // Scale to 0–100 risk score (0 = zero concentration, 100 = all from one source = HHI 10000)
-    const scorePct = Math.round((compHHI / 10000) * 100);
-
     // Risk band
     let band, bandColor;
     if (compHHI < 1500)      { band = "Low risk";       bandColor = "#5b8c5a"; }
     else if (compHHI < 2500) { band = "Moderate risk";  bandColor = "#e6b34a"; }
     else                     { band = "High risk";      bandColor = "#b5482c"; }
 
+    // Material icons
+    const ICONS = {
+      "Lithium (Li)":        "🔋",
+      "Rare Earths (La, Y)": "🔭",
+      "Zirconium (Zr)":      "✈️",
+      "Sulfur (S)":          "🌋",
+      "Phosphate (P)":       "🌾"
+    };
+
     // Weights panel
     const weightsHTML = Object.entries(normWeights)
-      .map(([mat, w]) => `${mat}: <span style="color:${MATERIAL_COLORS[mat]}">${Math.round(w * 100)}%</span>`)
+      .map(([mat, w]) => `${ICONS[mat] || "•"} ${mat}: <span style="color:${MATERIAL_COLORS[mat]}">${Math.round(w * 100)}%</span>`)
       .join("<br>");
 
     d3.select("#calc-weights")
@@ -885,8 +821,8 @@ function drawCalculator(hhi, conductivity) {
     out.append("div").attr("class","calc-score-label").text("COMPOSITE SUPPLY-CHAIN RISK");
     out.append("div").attr("class","calc-score")
       .style("color", bandColor)
-      .text(` ${d3.format(",")(Math.round(compHHI))}`);
-      
+      .text(`${d3.format(",")(Math.round(compHHI))}`);
+
     out.append("div").attr("class","calc-score-desc")
       .text(`${band}`);
 
@@ -899,20 +835,30 @@ function drawCalculator(hhi, conductivity) {
       contribution: w * hhiMap.get(mat)
     })).sort((a, b) => b.contribution - a.contribution);
 
-    const maxContrib = d3.max(contribs, d => d.contribution);
+    // Total contribution = compHHI — use this so bars show true % of composite
+    const totalContrib = compHHI;
 
     contribs.forEach(c => {
+      const pct = Math.round((c.contribution / totalContrib) * 100);
       const row = out.append("div").attr("class","calc-bar-row");
-      const label = row.append("div").attr("class","calc-bar-label");
-      label.append("span").text(c.mat);
-      label.append("span").text(`HHI ${d3.format(",")(c.hhi)} × ${Math.round(c.weight*100)}%`);
+      const label = row.append("div").attr("class","calc-bar-label")
+        .style("font-size", "15px");
+      // Icon + name on left
+      label.append("span")
+        .html(`${ICONS[c.mat] || ""} ${c.mat}`);
+      // Percentage on right
+      label.append("span")
+        .style("font-family", "var(--font-mono)")
+        .style("color", MATERIAL_COLORS[c.mat])
+        .style("font-size", "15px")
+        .text(`${pct}%`);
       const track = row.append("div").attr("class","calc-bar-track");
       track.append("div")
         .attr("class","calc-bar-fill")
         .style("background", MATERIAL_COLORS[c.mat])
         .style("width", "0%")
         .transition().duration(700)
-        .style("width", `${(c.contribution / maxContrib) * 100}%`);
+        .style("width", `${pct}%`);
     });
 
     // -------- Performance (ionic conductivity) panel --------
