@@ -38,8 +38,8 @@ html { scroll-behavior: smooth; }
 
 body {
   font-family: var(--font-body);
-  font-size: 17px;
-  line-height: 1.55;
+  font-size: 18px;
+  line-height: 1.6;
   color: var(--ink);
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
@@ -526,25 +526,25 @@ figcaption {
 }
 .calc-breakdown-title {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 13px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-soft);
   margin-bottom: 16px;
 }
 .calc-bar-row {
-  margin-bottom: 14px;
+  margin-bottom: 18px;
 }
 .calc-bar-label {
   display: flex;
   justify-content: space-between;
-  font-size: 13px;
-  margin-bottom: 4px;
+  font-size: 15px;
+  margin-bottom: 6px;
 }
 .calc-bar-label span:first-child { font-weight: 500; }
 .calc-bar-label span:last-child { font-family: var(--font-mono); color: var(--ink-soft); }
 .calc-bar-track {
-  height: 6px;
+  height: 10px;
   background: var(--bg-accent);
   position: relative;
 }
