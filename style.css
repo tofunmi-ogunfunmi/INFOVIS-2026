@@ -3,7 +3,7 @@
    ============================== */
 :root {
   --bg: #fbf9f4;
-  --bg-dark: #333333;
+  --bg-dark: #D3D3D3;
   --bg-accent: #f0e9de;
   --ink: #1a1e21;
   --ink-soft: #5a5f64;
@@ -523,6 +523,13 @@ figcaption {
   color: var(--ink-soft);
   margin-bottom: 32px;
   font-style: italic;
+}
+.calc-score-sublabel {
+  font-size: 14px;
+  color: var(--ink-soft);
+  font-style: italic;
+  margin-bottom: 14px;
+  line-height: 1.5;
 }
 .calc-breakdown-title {
   font-family: var(--font-mono);
