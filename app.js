@@ -244,19 +244,6 @@ function drawMap(production, world) {
       });
   });
 
-  // --- Flow toggle button ---
-  const flowBtn = controls.append("button")
-    .attr("class", "mc-btn mc-btn-flow")
-    .html(`<span style="margin-right:6px;">⇢</span>Show flows`)
-    .on("click", function() {
-      flowsVisible = !flowsVisible;
-      d3.select(this).classed("active", flowsVisible)
-        .html(flowsVisible
-          ? `<span style="margin-right:6px;">⇢</span>Hide flows`
-          : `<span style="margin-right:6px;">⇢</span>Show flows`);
-      if (flowsVisible) drawFlows(currentMaterial);
-      else clearFlows();
-    });
 
   // --- SVG layers ---
   // Ocean
@@ -984,8 +971,6 @@ function drawCalculator(hhi, conductivity) {
 
       out.append("div").attr("class","calc-divider");
       out.append("div").attr("class","calc-score-label").text("TYPICAL IONIC CONDUCTIVITY");
-      out.append("div").attr("class","calc-score-sublabel")
-        .text("How easily lithium ions move through the electrolyte — higher is better.");
       out.append("div").attr("class","calc-score")
         .style("color", band.color)
         .style("font-size","44px")
