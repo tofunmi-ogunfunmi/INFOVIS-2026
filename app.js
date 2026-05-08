@@ -586,8 +586,6 @@ function drawRisk(hhi, production) {
     .attr("x", d => x(d.producers) + (LABEL_POS[d.material]?.dx || 0))
     .attr("y", d => {
       const pos = LABEL_POS[d.material] || { side: "above" };
-      const rad = r(d.total);
-      // const rad = 10;
       return pos.side === "above" ? y(d.hhi) - FIXED_R - 8 : y(d.hhi) + FIXED_R + 18;
     })
     .attr("text-anchor", "middle")
