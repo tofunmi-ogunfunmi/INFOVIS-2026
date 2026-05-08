@@ -370,10 +370,10 @@ function drawRisk(hhi, production) {
     .attr("x", 0).attr("y", 0)
     .attr("width", iw).attr("height", y(2500))
     .attr("fill", "#b5482c").attr("opacity", 0.12);
-  g.append("rect")
-    .attr("x", 0).attr("y", y(2500))
-    .attr("width", iw).attr("height", y(1500) - y(2500))
-    .attr("fill", "#e6b34a").attr("opacity", 0.10);
+  // g.append("rect")
+  //   .attr("x", 0).attr("y", y(2500))
+  //   .attr("width", iw).attr("height", y(1500) - y(2500))
+  //   .attr("fill", "#e6b34a").attr("opacity", 0.10);
   g.append("rect")
     .attr("x", 0).attr("y", y(1500))
     .attr("width", iw).attr("height", ih - y(1500))
@@ -493,13 +493,13 @@ function drawRisk(hhi, production) {
     .attr("letter-spacing", "0.1em")
     .text("HIGH RISK");
 
-  g.append("text")
-    .attr("x", iw - 16).attr("y", y(2000))
-    .attr("text-anchor", "end")
-    .attr("font-family", "JetBrains Mono, monospace")
-    .attr("font-size", 12).attr("fill", "#c8893a")
-    .attr("letter-spacing", "0.1em")
-    .text("MODERATE RISK");
+  // g.append("text")
+  //   .attr("x", iw - 16).attr("y", y(2000))
+  //   .attr("text-anchor", "end")
+  //   .attr("font-family", "JetBrains Mono, monospace")
+  //   .attr("font-size", 12).attr("fill", "#c8893a")
+  //   .attr("letter-spacing", "0.1em")
+  //   .text("MODERATE RISK");
 
   g.append("text")
     .attr("x", iw - 16).attr("y", ih - 14)
