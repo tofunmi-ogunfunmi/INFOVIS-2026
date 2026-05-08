@@ -507,13 +507,13 @@ function drawRisk(hhi, production) {
     .attr("stroke-dasharray", "4,4")
     .attr("stroke-width", 1);
 
-  g.append("text")
-    .attr("x", 5).attr("y", y(2500) - 6)
-    .attr("text-anchor", "start")
-    .attr("font-family", "JetBrains Mono, monospace")
-    .attr("font-size", 14)
-    .attr("fill", "#b5482c")
-    .text("HHI = 2,500 · highly concentrated threshold");
+  // g.append("text")
+  //   .attr("x", 5).attr("y", y(2500) - 6)
+  //   .attr("text-anchor", "start")
+  //   .attr("font-family", "JetBrains Mono, monospace")
+  //   .attr("font-size", 14)
+  //   .attr("fill", "#b5482c")
+  //   .text("HHI = 2,500 · highly concentrated threshold");
 
   // Gridlines
   g.append("g").attr("class","grid")
@@ -602,9 +602,9 @@ function drawRisk(hhi, production) {
 
   // Zone labels
   g.append("text")
-    .attr("x", 16).attr("y", 20)
+    .attr("x", iw - 16).attr("y", 20)
     .attr("font-family", "JetBrains Mono, monospace")
-    .attr("font-size", 14)
+    .attr("font-size", 20)
     .attr("fill", "#b5482c")
     .attr("letter-spacing", "0.1em")
     .text("HIGH CONCENTRATION RISK");
@@ -613,7 +613,7 @@ function drawRisk(hhi, production) {
     .attr("x", iw - 16).attr("y", ih - 14)
     .attr("text-anchor", "end")
     .attr("font-family", "JetBrains Mono, monospace")
-    .attr("font-size", 14)
+    .attr("font-size", 20)
     .attr("fill", "#5b8c5a")
     .attr("letter-spacing", "0.1em")
     .text("LOW CONCENTRATION RISK");
