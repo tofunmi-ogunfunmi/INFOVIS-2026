@@ -602,7 +602,7 @@ function drawRisk(hhi, production) {
 
   // Zone labels
   g.append("text")
-    .attr("x", iw - 16).attr("y", 20)
+    .attr("x", 16).attr("y", 20)
     .attr("font-family", "JetBrains Mono, monospace")
     .attr("font-size", 20)
     .attr("fill", "#b5482c")
