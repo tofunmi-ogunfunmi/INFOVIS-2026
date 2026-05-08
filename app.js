@@ -927,7 +927,7 @@ function drawCalculator(hhi, conductivity) {
       .html(`$${d3.format(",")(Math.round(weightedCost))} <span style="font-size:18px;color:var(--ink-soft);font-weight:400;">/tonne (weighted avg.)</span>`);
     out.append("div").attr("class","calc-score-desc")
       .style("margin-bottom","16px")
-      .text("Based on USGS unit values, weighted by mass fraction");
+      .text("Based on 2022 USGS unit values");
     out.append("div").attr("class","calc-breakdown-title")
       .text("COST CONTRIBUTION BY MATERIAL");
 
