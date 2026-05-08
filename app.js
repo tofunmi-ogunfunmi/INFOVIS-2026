@@ -487,7 +487,7 @@ function drawRisk(hhi, production) {
 
   const x = d3.scaleLinear().domain([0, 28]).range([0, iw]);
   const y = d3.scaleLinear().domain([0, 5500]).range([ih, 0]);
-  const r = d3.scaleSqrt().domain([0, d3.max(data, d => d.total)]).range([6, 32]);
+  const FIXED_R = 20;
 
   // High-risk / low-risk zones
   g.append("rect")
@@ -570,7 +570,7 @@ function drawRisk(hhi, production) {
       hideTip();
     })
     .transition().duration(900).delay((d,i) => i * 120)
-    .attr("r", d => r(d.total));
+    .attr("r", FIXED_R);
 
   // Per-material label placement to avoid bubble/line collisions.
   // "above" = above bubble; "below" = below bubble; offset tweaks horizontal.
@@ -588,7 +588,7 @@ function drawRisk(hhi, production) {
       const pos = LABEL_POS[d.material] || { side: "above" };
       const rad = r(d.total);
       // const rad = 10;
-      return pos.side === "above" ? y(d.hhi) - rad - 8 : y(d.hhi) + rad + 18;
+      return pos.side === "above" ? y(d.hhi) - FIXED_R - 8 : y(d.hhi) + FIXED_R + 18;
     })
     .attr("text-anchor", "middle")
     .attr("font-family", "Fraunces, serif")
