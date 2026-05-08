@@ -603,7 +603,7 @@ function drawRisk(hhi, production) {
     .attr("x", 16).attr("y", 20)
     .attr("font-family", "JetBrains Mono, monospace")
     .attr("font-size", 14)
-    .attr("font-weight", 700)
+    .attr("font-weight", 750)
     .attr("fill", "#b5482c")
     .attr("letter-spacing", "0.1em")
     .text("HIGH CONCENTRATION RISK");
@@ -613,7 +613,7 @@ function drawRisk(hhi, production) {
     .attr("text-anchor", "end")
     .attr("font-family", "JetBrains Mono, monospace")
     .attr("font-size", 14)
-    .attr("font-weight", 700)
+    .attr("font-weight", 750)
     .attr("fill", "#5b8c5a")
     .attr("letter-spacing", "0.1em")
     .text("LOW CONCENTRATION RISK");
