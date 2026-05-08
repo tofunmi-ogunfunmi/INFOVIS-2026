@@ -489,7 +489,7 @@ function drawRisk(hhi, production) {
     .attr("x", iw - 16).attr("y", 20)
     .attr("text-anchor", "end")
     .attr("font-family", "JetBrains Mono, monospace")
-    .attr("font-size", 12).attr("fill", "#b5482c")
+    .attr("font-size", 20).attr("fill", "#b5482c")
     .attr("letter-spacing", "0.1em")
     .text("HIGH RISK");
 
@@ -505,7 +505,7 @@ function drawRisk(hhi, production) {
     .attr("x", iw - 16).attr("y", ih - 14)
     .attr("text-anchor", "end")
     .attr("font-family", "JetBrains Mono, monospace")
-    .attr("font-size", 12).attr("fill", "#5b8c5a")
+    .attr("font-size", 20).attr("fill", "#5b8c5a")
     .attr("letter-spacing", "0.1em")
     .text("LOW RISK");
 }
