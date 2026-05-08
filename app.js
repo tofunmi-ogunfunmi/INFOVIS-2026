@@ -991,6 +991,9 @@ function drawCalculator(hhi, conductivity) {
         .html(`Source: OBELiX dataset (Therrien et al. 2025), ${c.n} room-temperature measurements classified as ${chem.family}-family by composition.`);
     }
   }
+ render(CHEMISTRIES[0]);
+}
+
 /* ============================================================
    6. RADAR CHART — Section 2 chemistry comparison
    ============================================================ */
@@ -1173,5 +1176,4 @@ function drawRadar(hhi, conductivity, prices) {
     .text("All axes from data: OBELiX, USGS prices.csv, hhi.csv");
 }
 
-  render(CHEMISTRIES[0]);
-}
+ 
