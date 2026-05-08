@@ -523,11 +523,11 @@ function drawRisk(hhi, production) {
   // Axes
   g.append("g").attr("class","axis")
     .attr("transform",`translate(0,${ih})`)
-    .attr("fill", "#fbf9f4")
+    .attr("fill", "#f5efe0")
     .call(d3.axisBottom(x).ticks(7))
     .call(s => s.select(".domain").remove());
   g.append("g").attr("class","axis")
-    .attr("fill", "#fbf9f4")
+    .attr("fill", "#f5efe0")
     .call(d3.axisLeft(y).ticks(6).tickFormat(d3.format(",")))
     .call(s => s.select(".domain").remove());
 
@@ -536,7 +536,7 @@ function drawRisk(hhi, production) {
     .attr("x", iw / 2).attr("y", ih + 44)
     .attr("text-anchor", "middle")
     .attr("font-family", "Inter, sans-serif")
-    .attr("font-size", 20).attr("fill", "#fbf9f4")
+    .attr("font-size", 20).attr("fill", "#f5efe0")
     .text("Number of producing countries");
 
   g.append("text")
@@ -544,7 +544,7 @@ function drawRisk(hhi, production) {
     .attr("x", -ih / 2).attr("y", -70)
     .attr("text-anchor", "middle")
     .attr("font-family", "Inter, sans-serif")
-    .attr("font-size", 20).attr("fill", "#fbf9f4")
+    .attr("font-size", 20).attr("fill", "#f5efe0")
     .text("HHI concentration score");
 
   // Bubbles
