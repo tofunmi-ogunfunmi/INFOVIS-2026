@@ -620,6 +620,47 @@ function drawRisk(hhi, production) {
     .attr("letter-spacing", "0.1em")
     .text("LOW CONCENTRATION RISK");
 
+   // Bubble size legend — reference circles
+  const legendG = g.append("g")
+    .attr("transform", `translate(${iw - 140}, ${ih - 130})`);
+
+  legendG.append("text")
+    .attr("x", 0).attr("y", 0)
+    .attr("font-family", "JetBrains Mono, monospace")
+    .attr("font-size", 10)
+    .attr("fill", "#9ea3a8")
+    .attr("letter-spacing", "0.08em")
+    .text("PRODUCTION VOLUME");
+
+  // Three reference sizes — small, medium, large
+  const refSizes = [
+    { val: 500000,   label: "500k t" },
+    { val: 5000000,  label: "5M t"   },
+    { val: 20000000, label: "20M t"  }
+  ];
+
+  refSizes.forEach((ref, i) => {
+    const cx = 20 + i * 44;
+    const cy = 70;
+    const rad = r(ref.val);
+
+    legendG.append("circle")
+      .attr("cx", cx).attr("cy", cy)
+      .attr("r", rad)
+      .attr("fill", "none")
+      .attr("stroke", "#9ea3a8")
+      .attr("stroke-width", 1)
+      .attr("stroke-dasharray", "2,2");
+
+    legendG.append("text")
+      .attr("x", cx).attr("y", cy + rad + 12)
+      .attr("text-anchor", "middle")
+      .attr("font-family", "Inter, sans-serif")
+      .attr("font-size", 10)
+      .attr("fill", "#9ea3a8")
+      .text(ref.label);
+  });
+
 }
 
 /* ============================================================
