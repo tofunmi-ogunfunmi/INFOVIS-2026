@@ -522,9 +522,11 @@ function drawRisk(hhi, production) {
   // Axes
   g.append("g").attr("class","axis")
     .attr("transform",`translate(0,${ih})`)
+    .attr("fill", "#fbf9f4")
     .call(d3.axisBottom(x).ticks(7))
     .call(s => s.select(".domain").remove());
   g.append("g").attr("class","axis")
+    .attr("fill", "#fbf9f4")
     .call(d3.axisLeft(y).ticks(6).tickFormat(d3.format(",")))
     .call(s => s.select(".domain").remove());
 
