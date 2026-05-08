@@ -533,7 +533,7 @@ function drawRisk(hhi, production) {
     .attr("x", iw / 2).attr("y", ih + 44)
     .attr("text-anchor", "middle")
     .attr("font-family", "Inter, sans-serif")
-    .attr("font-size", 20).attr("fill", "#4a4f54")
+    .attr("font-size", 20).attr("fill", "#fbf9f4")
     .text("Number of producing countries");
 
   g.append("text")
@@ -541,7 +541,7 @@ function drawRisk(hhi, production) {
     .attr("x", -ih / 2).attr("y", -70)
     .attr("text-anchor", "middle")
     .attr("font-family", "Inter, sans-serif")
-    .attr("font-size", 20).attr("fill", "#4a4f54")
+    .attr("font-size", 20).attr("fill", "#fbf9f4")
     .text("HHI concentration score");
 
   // Bubbles
