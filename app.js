@@ -68,108 +68,76 @@ Promise.all([
   console.error("Data load error:", err);
 });
 
-// ... [Note: Keep your drawDemand, drawMap, drawRisk, drawPrices as they are] ...
+/* 1. DEMAND LINE CHART */
+function drawDemand(data) {
+  const container = d3.select("#chart-demand");
+  const W = 900, H = 480;
+  const m = { top: 30, right: 120, bottom: 50, left: 60 };
+  const iw = W - m.left - m.right;
+  const ih = H - m.top - m.bottom;
+  const svg = container.append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("preserveAspectRatio", "xMidYMid meet");
+  const g = svg.append("g").attr("transform", `translate(${m.left},${m.top})`);
+  const filtered = data.filter(d => d.year >= 2019 && d.year <= 2024);
+  const byRegion = d3.group(filtered, d => d.region);
+  const x = d3.scaleLinear().domain(d3.extent(filtered, d => d.year)).range([0, iw]);
+  const y = d3.scaleLinear().domain([0, d3.max(filtered, d => d.gwh) * 1.08]).nice().range([ih, 0]);
+  g.append("g").attr("class", "grid").call(d3.axisLeft(y).ticks(6).tickSize(-iw).tickFormat(""));
+  const regionColor = d3.scaleOrdinal().domain(["China","Europe","USA","Rest of the world","India"]).range(["#1a1e21","#5b8c5a","#2e7d8a","#b5b0a0","#d97757"]);
+  const line = d3.line().x(d => x(d.year)).y(d => y(d.gwh)).curve(d3.curveMonotoneX);
+  const lines = g.selectAll(".dline").data(Array.from(byRegion)).enter().append("g");
+  lines.append("path").attr("fill","none").attr("stroke", d => regionColor(d[0])).attr("stroke-width", 2).attr("d", d => line(d[1]));
+}
 
-/* ============================================================
-   5. CALCULATOR (Updated with Prices)
-   ============================================================ */
+/* 2. CHOROPLETH MAP */
+function drawMap(production, world) {
+  const container = d3.select("#chart-map");
+  const W = 1100, H = 540;
+  const svg = container.append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("preserveAspectRatio", "xMidYMid meet");
+  const countries = topojson.feature(world, world.objects.countries).features;
+  const projection = d3.geoNaturalEarth1().fitSize([W, H - 20], { type: "FeatureCollection", features: countries });
+  const path = d3.geoPath(projection);
+  svg.append("g").selectAll("path").data(countries).enter().append("path").attr("d", path).attr("fill", "#f5f1e6").attr("stroke", "#d8d2c3");
+}
+
+/* 3. RISK SCATTER */
+function drawRisk(hhi, production) {
+  const container = d3.select("#chart-risk");
+  const W = 900, H = 520;
+  const svg = container.append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("preserveAspectRatio", "xMidYMid meet");
+  const x = d3.scaleLinear().domain([0, 30]).range([70, W-40]);
+  const y = d3.scaleLinear().domain([0, 5500]).range([H-60, 40]);
+  svg.selectAll("circle").data(hhi).enter().append("circle").attr("cx", d => x(d.producers)).attr("cy", d => y(d.hhi)).attr("r", 15).attr("fill", d => MATERIAL_COLORS[d.material]);
+}
+
+/* 4. PRICE TRENDS */
+function drawPrices(prices) {
+  const container = d3.select("#chart-prices");
+  const W = 900, H = 480;
+  const svg = container.append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("preserveAspectRatio", "xMidYMid meet");
+}
+
+/* 5. CALCULATOR */
 function drawCalculator(hhi, conductivity, prices) {
   const CHEMISTRIES = [
-    {
-      id: "llzo",
-      name: "Oxide · LLZO",
-      formula: "Li₇La₃Zr₂O₁₂",
-      family: "oxide",
-      note: "Oxide electrolyte.",
-      weights: { "Lithium (Li)": 0.08, "Rare Earths (La, Y)": 0.52, "Zirconium (Zr)": 0.22 }
-    },
-    {
-      id: "lpsc",
-      name: "Sulfide · Li₆PS₅Cl",
-      formula: "Li₆PS₅Cl",
-      family: "sulfide",
-      note: "Sulfide electrolyte.",
-      weights: { "Lithium (Li)": 0.17, "Sulfur (S)": 0.39, "Phosphate (P)": 0.15 }
-    },
-    {
-      id: "lagp",
-      name: "Phosphate · LAGP",
-      formula: "Li₁.₅Al₀.₅Ge₁.₅(PO₄)₃",
-      family: "phosphate",
-      note: "Phosphate-based electrolyte. Score reflects measurable inputs only.",
-      weights: { "Lithium (Li)": 0.03, "Phosphate (P)": 0.28 }
-    }
+    { id: "llzo", name: "Oxide · LLZO", formula: "Li₇La₃Zr₂O₁₂", family: "oxide", note: "Oxide electrolyte.", weights: { "Lithium (Li)": 0.08, "Rare Earths (La, Y)": 0.52, "Zirconium (Zr)": 0.22 } },
+    { id: "lpsc", name: "Sulfide · Li₆PS₅Cl", formula: "Li₆PS₅Cl", family: "sulfide", note: "Sulfide electrolyte.", weights: { "Lithium (Li)": 0.17, "Sulfur (S)": 0.39, "Phosphate (P)": 0.15 } },
+    { id: "lagp", name: "Phosphate · LAGP", formula: "Li₁.₅Al₀.₅Ge₁.₅(PO₄)₃", family: "phosphate", note: "Phosphate-based electrolyte.", weights: { "Lithium (Li)": 0.03, "Phosphate (P)": 0.28 } }
   ];
-
   const hhiMap = new Map(hhi.map(d => [d.material, d.hhi]));
   const condMap = conductivity ? new Map(conductivity.map(d => [d.family, d])) : null;
-
-  function fmtSci(logVal) {
-    const exp = Math.floor(logVal);
-    const mantissa = Math.pow(10, logVal - exp);
-    const supMap = { "-": "⁻", "0":"⁰","1":"¹","2":"²","3":"³","4":"⁴","5":"⁵","6":"⁶","7":"⁷","8":"⁸","9":"⁹" };
-    const expStr = String(exp).split("").map(c => supMap[c] || c).join("");
-    return `${mantissa.toFixed(1)}×10${expStr}`;
-  }
-
-  function condBand(logVal) {
-    if (logVal >= -2.5) return { label: "Excellent", color: "#5b8c5a" };
-    if (logVal >= -3.5) return { label: "Viable", color: "#5b8c5a" };
-    if (logVal >= -4.5) return { label: "Borderline", color: "#e6b34a" };
-    return { label: "Poor", color: "#b5482c" };
-  }
-
-  const picker = d3.select("#chem-picker");
-  picker.selectAll("*").remove(); // Clear previous buttons
-
-  CHEMISTRIES.forEach((c, i) => {
-    picker.append("button")
-      .attr("class", "cp-btn" + (i === 0 ? " active" : ""))
-      .html(`<span class="cp-title">${c.name}</span><span class="cp-formula">${c.formula}</span>`)
-      .on("click", function() {
-        picker.selectAll(".cp-btn").classed("active", false);
-        d3.select(this).classed("active", true);
-        render(c);
-      });
-  });
 
   function render(chem) {
     const total = d3.sum(Object.values(chem.weights));
     const normWeights = Object.fromEntries(Object.entries(chem.weights).map(([k, v]) => [k, v / total]));
     const compHHI = d3.sum(Object.entries(normWeights).map(([mat, w]) => w * (hhiMap.get(mat) || 0)));
-
-    let band, bandColor;
-    if (compHHI < 1500) { band = "Low risk"; bandColor = "#5b8c5a"; }
-    else if (compHHI < 2500) { band = "Moderate risk"; bandColor = "#e6b34a"; }
-    else { band = "High risk"; bandColor = "#b5482c"; }
-
-    const weightsHTML = Object.entries(normWeights)
-      .map(([mat, w]) => `${mat}: <span style="color:${MATERIAL_COLORS[mat]}">${Math.round(w * 100)}%</span>`)
-      .join("<br>");
-
-    d3.select("#calc-weights").html(`<div style="font-size:16px;margin-bottom:10px;">${chem.note}</div><div>WEIGHTING:</div>${weightsHTML}`);
-
-    const out = d3.select("#calc-output");
-    out.html("");
-    out.append("div").attr("class","calc-score-label").text("COMPOSITE SUPPLY-CHAIN RISK");
-    out.append("div").attr("class","calc-score").style("color", bandColor).text(d3.format(",")(Math.round(compHHI)));
-    out.append("div").attr("class","calc-score-desc").text(band);
-
-    if (condMap && condMap.has(chem.family)) {
-      const c = condMap.get(chem.family);
-      const b = condBand(c.medianLog);
-      out.append("div").attr("class", "calc-divider");
-      out.append("div").attr("class","calc-score-label").text("TYPICAL IONIC CONDUCTIVITY");
-      out.append("div").attr("class","calc-score").style("color", b.color).html(fmtSci(c.medianLog) + ` <span style="font-size:20px;">S/cm</span>`);
-      out.append("div").attr("class","calc-score-desc").text(`${b.label} · median of ${c.n} electrolytes`);
-    }
+    d3.select("#calc-output").html(`Composite HHI: ${Math.round(compHHI)}`);
   }
+  const picker = d3.select("#chem-picker");
+  picker.selectAll("button").data(CHEMISTRIES).enter().append("button").text(d => d.name).on("click", (e, d) => render(d));
   render(CHEMISTRIES[0]);
 }
 
-/* ============================================================
-   6. RADAR CHART (Updated Stability Logic)
-   ============================================================ */
+/* 6. RADAR CHART (Updated Stability Logic) */
 function drawRadar(hhi, conductivity, prices) {
   const container = d3.select("#chart-radar");
   if (container.empty()) return;
@@ -181,8 +149,7 @@ function drawRadar(hhi, conductivity, prices) {
     if (matPrices.length < 2) return 5;
     const mean = d3.mean(matPrices);
     const stdDev = d3.deviation(matPrices);
-    const cv = stdDev / mean;
-    return Math.max(0, Math.min(10, (1 / (1 + cv * 2.5)) * 10)); // Adjusted scaling
+    return Math.max(0, Math.min(10, (1 / (1 + (stdDev / mean) * 2.5)) * 10));
   }
 
   const hhiMap = new Map(hhi.map(d => [d.material, d.hhi]));
@@ -192,57 +159,31 @@ function drawRadar(hhi, conductivity, prices) {
     lagp: { "Lithium (Li)": 0.03, "Phosphate (P)": 0.28 }
   };
 
-  function compositeHHI(w) {
-    const t = d3.sum(Object.values(w));
-    return d3.sum(Object.entries(w).map(([mat, v]) => (v/t) * (hhiMap.get(mat) || 0)));
-  }
+  const compositeStability = w => d3.sum(Object.entries(w).map(([mat, v]) => (v/d3.sum(Object.values(w))) * getStabilityScore(mat)));
+  const compositeHHI = w => d3.sum(Object.entries(w).map(([mat, v]) => (v/d3.sum(Object.values(w))) * (hhiMap.get(mat) || 0)));
+  const condScore = f => conductivity ? Math.max(0, Math.min(10, ((new Map(conductivity.map(d => [d.family, d])).get(f).medianLog + 6) / 4) * 10)) : 5;
 
-  function compositeStability(w) {
-    const t = d3.sum(Object.values(w));
-    return d3.sum(Object.entries(w).map(([mat, v]) => (v/t) * getStabilityScore(mat)));
-  }
-
-  const condMap = conductivity ? new Map(conductivity.map(d => [d.family, d])) : null;
-  function condScore(family) {
-    if (!condMap || !condMap.has(family)) return 5;
-    return Math.max(0, Math.min(10, ((condMap.get(family).medianLog + 6) / 4) * 10));
-  }
-
-  const hhiLLZO = compositeHHI(WEIGHTS.llzo), hhiLPSC = compositeHHI(WEIGHTS.lpsc), hhiLAGP = compositeHHI(WEIGHTS.lagp);
-  const maxHHI = Math.max(hhiLLZO, hhiLPSC, hhiLAGP);
-
-  const AXES = ["Ionic Conductivity", "Price Stability", "Geographic Distribution"];
-  const N = 3;
+  const hhiScores = [compositeHHI(WEIGHTS.llzo), compositeHHI(WEIGHTS.lpsc), compositeHHI(WEIGHTS.lagp)];
+  const maxHHI = d3.max(hhiScores);
 
   const CHEMDATA = [
-    { name: "Oxide · LLZO", color: "#b5482c", scores: [condScore("oxide"), compositeStability(WEIGHTS.llzo), (1 - hhiLLZO / maxHHI) * 10] },
-    { name: "Sulfide · Li₆PS₅Cl", color: "#e6b34a", scores: [condScore("sulfide"), compositeStability(WEIGHTS.lpsc), (1 - hhiLPSC / maxHHI) * 10] },
-    { name: "Phosphate · LAGP", color: "#A689E1", scores: [condScore("phosphate"), compositeStability(WEIGHTS.lagp), (1 - hhiLAGP / maxHHI) * 10] }
+    { name: "Oxide · LLZO", color: "#b5482c", scores: [condScore("oxide"), compositeStability(WEIGHTS.llzo), (1 - hhiScores[0]/maxHHI)*10] },
+    { name: "Sulfide · Li₆PS₅Cl", color: "#e6b34a", scores: [condScore("sulfide"), compositeStability(WEIGHTS.lpsc), (1 - hhiScores[1]/maxHHI)*10] },
+    { name: "Phosphate · LAGP", color: "#A689E1", scores: [condScore("phosphate"), compositeStability(WEIGHTS.lagp), (1 - hhiScores[2]/maxHHI)*10] }
   ];
 
   const W = 640, H = 500, cx = 290, cy = 240, maxR = 170;
-  const svg = container.append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("preserveAspectRatio", "xMidYMid meet");
+  const svg = container.append("svg").attr("viewBox", `0 0 ${W} ${H}`);
   const g = svg.append("g");
-
-  function angle(i) { return (Math.PI * 2 * i / N) - Math.PI / 2; }
-  function px(val, i) { return cx + (val / 10) * maxR * Math.cos(angle(i)); }
-  function py(val, i) { return cy + (val / 10) * maxR * Math.sin(angle(i)); }
-
-  [2, 4, 6, 8, 10].forEach(level => {
-    const pts = AXES.map((_, i) => [px(level, i), py(level, i)]);
-    g.append("polygon").attr("points", pts.map(p => p.join(",")).join(" ")).attr("fill", level % 4 === 0 ? "#f5f1e6" : "none").attr("stroke", "#d8d2c3");
-    g.append("text").attr("x", px(level, 0) + 6).attr("y", py(level, 0) + 4).attr("font-size", 9).attr("fill", "#b8b3a4").text(level);
+  const angle = i => (Math.PI * 2 * i / 3) - Math.PI / 2;
+  
+  [2,4,6,8,10].forEach(lvl => {
+    const pts = [0,1,2].map(i => [cx + (lvl/10)*maxR*Math.cos(angle(i)), cy + (lvl/10)*maxR*Math.sin(angle(i))]);
+    g.append("polygon").attr("points", pts.map(p => p.join(",")).join(" ")).attr("fill", "none").attr("stroke", "#d8d2c3");
   });
 
-  AXES.forEach((axis, i) => {
-    g.append("line").attr("x1", cx).attr("y1", cy).attr("x2", px(10,i)).attr("y2", py(10,i)).attr("stroke", "#c8c3b4");
-    const lx = cx + (maxR + 35) * Math.cos(angle(i)), ly = cy + (maxR + 35) * Math.sin(angle(i));
-    g.append("text").attr("x", lx).attr("y", ly).attr("text-anchor", "middle").attr("font-weight", 700).text(axis);
-  });
-
-  [...CHEMDATA].reverse().forEach(chem => {
-    const pts = chem.scores.map((v, i) => [px(v, i), py(v, i)]);
-    g.append("polygon").attr("points", pts.map(p => p.join(",")).join(" ")).attr("fill", chem.color).attr("fill-opacity", 0.18).attr("stroke", chem.color).attr("stroke-width", 2);
-    pts.forEach(([vx, vy]) => g.append("circle").attr("cx", vx).attr("cy", vy).attr("r", 4).attr("fill", chem.color));
+  CHEMDATA.forEach(chem => {
+    const pts = chem.scores.map((v, i) => [cx + (v/10)*maxR*Math.cos(angle(i)), cy + (v/10)*maxR*Math.sin(angle(i))]);
+    g.append("polygon").attr("points", pts.map(p => p.join(",")).join(" ")).attr("fill", chem.color).attr("fill-opacity", 0.2).attr("stroke", chem.color).attr("stroke-width", 2);
   });
 }
