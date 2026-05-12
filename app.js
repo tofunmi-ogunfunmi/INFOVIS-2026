@@ -69,8 +69,8 @@ Promise.all([
   drawMap(production, world);
   drawRisk(hhi, production);
   drawPrices(prices);
-  drawCalculator(hhi, conductivity);
-  drawRadar(hhi, conductivity);
+  drawCalculator(hhi, conductivity, prices);
+  drawRadar(hhi, conductivity, prices);
 }).catch(err => {
   console.error("Data load error:", err);
   document.body.insertAdjacentHTML("afterbegin",
