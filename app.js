@@ -1003,7 +1003,7 @@ function drawRadar(hhi, conductivity, prices) {
   if (container.empty()) return;
   container.selectAll("*").remove();
 
-  // --- 1. Scoring Logic: YoY Volatility ---
+  // --- 1. Scoring Logic: Median YoY Volatility ---
   function getStabilityScore(materialName) {
     if (!prices) return 5;
     
@@ -1022,9 +1022,12 @@ function drawRadar(hhi, conductivity, prices) {
       if (prev > 0) yoyChanges.push(Math.abs((curr - prev) / prev));
     }
     
-    // Map to 0-10: Lower volatility = Higher score
-    const avgVolatility = d3.mean(yoyChanges) || 0;
-    return Math.max(0, Math.min(10, (1 / (1 + avgVolatility * 4.0)) * 10));
+    // Using MEDIAN ignores one-time price shocks and rewards long-term flatness
+    const medianVolatility = d3.median(yoyChanges) || 0;
+    
+    // Map to 0-10: Lower median volatility = Higher score. 
+    // The 12.0 multiplier spreads the values out nicely.
+    return Math.max(0, Math.min(10, (1 / (1 + medianVolatility * 12.0)) * 10));
   }
 
   function condScore(family) {
@@ -1047,10 +1050,11 @@ function drawRadar(hhi, conductivity, prices) {
   const hhiScores = [getCompHHI(WEIGHTS.llzo), getCompHHI(WEIGHTS.lpsc), getCompHHI(WEIGHTS.lagp)];
   const maxHHI = Math.max(...hhiScores);
 
+  // Added "sub" text to make the methodology explicitly clear on the chart
   const AXES = [
-    { name: "Ionic Conductivity", desc: "10 = High conductivity (10⁻² S/cm), 0 = Poor (10⁻⁵ S/cm)" },
-    { name: "Price Stability", desc: "10 = Stable (Low YoY Volatility), 0 = Spiky (High YoY Volatility)" },
-    { name: "Geographic Distribution", desc: "10 = Globally diverse production, 0 = High monopoly risk (HHI)" }
+    { name: "Ionic Conductivity", sub: "Calculated via Median Log S/cm", desc: "10 = High conductivity (10⁻² S/cm), 0 = Poor (10⁻⁵ S/cm)" },
+    { name: "Price Stability", sub: "Calculated via Median YoY % Change", desc: "10 = Stable (Low Median YoY Change), 0 = Spiky (High Median YoY Change)" },
+    { name: "Geographic Distribution", sub: "Calculated via Inverse HHI", desc: "10 = Globally diverse production, 0 = High monopoly risk (HHI)" }
   ];
 
   const CHEMDATA = [
@@ -1060,7 +1064,7 @@ function drawRadar(hhi, conductivity, prices) {
   ];
 
   // --- 2. Visual Config & Drawing Logic ---
-  const W = 640, H = 500, cx = 290, cy = 250, maxR = 160;
+  const W = 640, H = 540, cx = 290, cy = 250, maxR = 160;
   const svg = container.append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("preserveAspectRatio", "xMidYMid meet");
   const g = svg.append("g");
   const angle = i => (Math.PI * 2 * i / 3) - Math.PI / 2;
@@ -1072,15 +1076,34 @@ function drawRadar(hhi, conductivity, prices) {
     g.append("text").attr("x", cx + (level/10)*maxR*Math.cos(angle(0)) + 5).attr("y", cy + (level/10)*maxR*Math.sin(angle(0))).attr("font-size", 9).attr("fill", "#b8b3a4").text(level);
   });
 
-  // Axis Labels with Info Tooltips
+  // Axis Labels and Sub-Labels
   AXES.forEach((axis, i) => {
-    const lx = cx + (maxR + 35) * Math.cos(angle(i)), ly = cy + (maxR + 35) * Math.sin(angle(i));
-    const label = g.append("text")
-      .attr("x", lx).attr("y", ly).attr("text-anchor", "middle")
-      .attr("font-family", "Inter, sans-serif").attr("font-weight", 700).attr("fill", "#1a1e21")
-      .style("cursor", "help").text(axis.name);
+    const lx = cx + (maxR + 45) * Math.cos(angle(i));
+    const ly = cy + (maxR + 45) * Math.sin(angle(i));
     
-    label.on("mouseenter", (e) => showTip(`<strong>${axis.name}</strong><br>${axis.desc}`, e)).on("mouseleave", hideTip);
+    const labelGroup = g.append("g")
+      .attr("transform", `translate(${lx}, ${ly})`)
+      .style("cursor", "help");
+      
+    // Main Title
+    labelGroup.append("text")
+      .attr("text-anchor", "middle")
+      .attr("font-family", "Inter, sans-serif")
+      .attr("font-weight", 700)
+      .attr("fill", "#fbf9f4") // Matched to your dark theme text color
+      .text(axis.name);
+      
+    // Subtitle explaining the metric
+    labelGroup.append("text")
+      .attr("y", 14)
+      .attr("text-anchor", "middle")
+      .attr("font-family", "Inter, sans-serif")
+      .attr("font-weight", 400)
+      .attr("font-size", 10)
+      .attr("fill", "#b8b3a4")
+      .text(axis.sub);
+    
+    labelGroup.on("mouseenter", (e) => showTip(`<strong>${axis.name}</strong><br>${axis.desc}`, e)).on("mouseleave", hideTip);
   });
 
   // Polygons
@@ -1088,16 +1111,24 @@ function drawRadar(hhi, conductivity, prices) {
     const pts = chem.scores.map((v, i) => [cx + (v/10)*maxR*Math.cos(angle(i)), cy + (v/10)*maxR*Math.sin(angle(i))]);
     g.append("polygon").attr("points", pts.map(p => p.join(",")).join(" "))
       .attr("fill", chem.color).attr("fill-opacity", 0.15).attr("stroke", chem.color).attr("stroke-width", 2.5);
-    pts.forEach(p => g.append("circle").attr("cx", p[0]).attr("cy", p[1]).attr("r", 5).attr("fill", chem.color).attr("stroke", "#fbf9f4"));
+    pts.forEach(p => g.append("circle").attr("cx", p[0]).attr("cy", p[1]).attr("r", 5).attr("fill", chem.color).attr("stroke", "#1a1e21"));
   });
 
   // --- 3. LEGEND ---
   const legend = g.append("g").attr("transform", `translate(${W - 160}, 20)`);
-  
-  // Reverse back so the legend reads top-to-bottom logically
   CHEMDATA.reverse().forEach((chem, i) => {
     const row = legend.append("g").attr("transform", `translate(0, ${i * 25})`);
     row.append("rect").attr("width", 12).attr("height", 12).attr("fill", chem.color).attr("rx", 2);
-    row.append("text").attr("x", 18).attr("y", 10).attr("font-size", 12).attr("font-weight", 500).attr("fill", "#1a1e21").text(chem.name);
+    row.append("text").attr("x", 18).attr("y", 10).attr("font-size", 12).attr("font-weight", 500).attr("fill", "#b8b3a4").text(chem.name);
   });
+  
+  // Footer text to clarify the 0-10 scale
+  g.append("text")
+    .attr("x", cx)
+    .attr("y", H - 5)
+    .attr("text-anchor", "middle")
+    .attr("font-size", 11)
+    .attr("font-style", "italic")
+    .attr("fill", "#b8b3a4")
+    .text("Scores mapped 0–10 where 10 represents optimal target metrics.");
 }
