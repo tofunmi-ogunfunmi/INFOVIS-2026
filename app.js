@@ -1030,12 +1030,17 @@ function drawRadar(hhi, conductivity, prices) {
     return Math.max(0, Math.min(10, (1 / (1 + medianVolatility * 12.0)) * 10));
   }
 
-  function condScore(family) {
-    if (!conductivity) return 5;
-    const familyData = conductivity.find(d => d.family === family);
-    if (!familyData) return 5;
-    return Math.max(0, Math.min(10, ((familyData.medianLog + 5) / 3) * 10));
-  }
+   function condScore(family) {
+       if (!conductivity) return 5;
+       const familyData = conductivity.find(d => d.family === family);
+       if (!familyData) return 5;
+       
+       // Narrowing the span: maps a log of -5 to a score of 0, and -3 to a score of 10
+       // Oxide (-4.55) -> ~2.2
+       // Phosphate (-4.08) -> ~4.6
+       // Sulfide (-3.04) -> ~9.8
+       return Math.max(0, Math.min(10, ((familyData.medianLog + 5) / 2) * 10));
+     }
 
   const hhiMap = new Map(hhi.map(d => [d.material, d.hhi]));
   const WEIGHTS = {
@@ -1051,11 +1056,11 @@ function drawRadar(hhi, conductivity, prices) {
   const maxHHI = Math.max(...hhiScores);
 
   // Added "sub" text to make the methodology explicitly clear on the chart
-  const AXES = [
-    { name: "Ionic Conductivity", sub: "Calculated via Median Log S/cm", desc: "10 = High conductivity (10⁻² S/cm), 0 = Poor (10⁻⁵ S/cm)" },
-    { name: "Price Stability", sub: "Calculated via Median YoY % Change", desc: "10 = Stable (Low Median YoY Change), 0 = Spiky (High Median YoY Change)" },
-    { name: "Geographic Distribution", sub: "Calculated via Inverse HHI", desc: "10 = Globally diverse production, 0 = High monopoly risk (HHI)" }
-  ];
+   const AXES = [
+       { name: "Ionic Conductivity", sub: "Calculated via Median Log S/cm", desc: "10 = High conductivity (10⁻³ S/cm), 0 = Poor (10⁻⁵ S/cm)" },
+       { name: "Price Stability", sub: "Calculated via Median YoY % Change", desc: "10 = Stable (Low Median YoY Change), 0 = Spiky (High Median YoY Change)" },
+       { name: "Geographic Distribution", sub: "Calculated via Inverse HHI", desc: "10 = Globally diverse production, 0 = High monopoly risk (HHI)" }
+     ];
 
   const CHEMDATA = [
     { name: "Oxide · LLZO", color: MATERIAL_COLORS["Rare Earths (La, Y)"], scores: [condScore("oxide"), getCompStability(WEIGHTS.llzo), (1 - hhiScores[0]/maxHHI)*10] },
