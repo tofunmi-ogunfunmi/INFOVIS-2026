@@ -494,11 +494,11 @@ function drawRisk(hhi, production) {
   g.append("rect")
     .attr("x", 0).attr("y", 0)
     .attr("width", iw).attr("height", y(2500))
-    .attr("fill", "#b5482c").attr("opacity", 0.06);
+    .attr("fill", "#b5482c").attr("opacity", 0.15);
   g.append("rect")
     .attr("x", 0).attr("y", y(1500))
     .attr("width", iw).attr("height", ih - y(1500))
-    .attr("fill", "#5b8c5a").attr("opacity", 0.06);
+    .attr("fill", "#5b8c5a").attr("opacity", 0.15);
 
   // Threshold line at HHI=2500 (standard "highly concentrated")
   g.append("line")
@@ -516,10 +516,19 @@ function drawRisk(hhi, production) {
   //   .attr("fill", "#b5482c")
   //   .text("HHI = 2,500 · highly concentrated threshold");
 
-  // Gridlines
+  // // Gridlines
+  // g.append("g").attr("class","grid")
+  //   .call(d3.axisLeft(y).ticks(6).tickSize(-iw).tickFormat(""))
+  //   // .attr("fill", "#f5efe0");
+
+   // Gridlines
   g.append("g").attr("class","grid")
     .call(d3.axisLeft(y).ticks(6).tickSize(-iw).tickFormat(""))
-    // .attr("fill", "#f5efe0");
+    .call(g => g.select(".domain").remove()) // Deletes the accidental solid background block
+    .selectAll("line")                       // Targets the actual grid lines
+    .attr("stroke", "#f5efe0")               // Colors them light beige
+    .attr("stroke-opacity", 0.15)            // Makes them faint so they don't overpower data
+    .attr("stroke-dasharray", "3,3");        // Optional: makes the grid dashed
 
   // Axes
   g.append("g").attr("class","axis")
