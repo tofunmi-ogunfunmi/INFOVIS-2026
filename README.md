@@ -11,7 +11,7 @@ electrolytes reshape global supply chain risk.
 ```
 index.html       Seven-section narrative page
 style.css        Editorial design system (Fraunces + Inter, cream + dark)
-app.js           D3 v7 — six interactive charts + calculator
+app.js           D3 v7 for interactive charts + calculator
 data/
   battery_demand.csv     IEA Global EV Outlook 2025 (historical, GWh by region)
   production_2024.csv    USGS Mineral Commodity Summaries 2025 (top-10 producers)
@@ -19,7 +19,7 @@ data/
   prices.csv             USGS Data Series 140 unit values, 2012–2022
   world-110m.json        Natural Earth 1:110m via world-atlas npm package
 vendor/
-  d3.min.js              D3 v7 (also available from jsDelivr if you prefer CDN)
+  d3.min.js              D3 v7
   topojson-client.min.js
 ```
 
@@ -130,5 +130,4 @@ risk-only mode. You can ship the site without OBELiX if you prefer.
 
 ## License
 
-Code: MIT. Data: subject to original USGS / IEA terms (both public domain or
-freely redistributable for non-commercial use).
+Data: subject to original USGS / IEA terms.
