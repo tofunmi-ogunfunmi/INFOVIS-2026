@@ -1,5 +1,5 @@
 /* ============================================================
-   The Hidden Geography of Solid-State Batteries
+   The Material Risk of Solid-State Batteries
    INFO 247 Final Project — D3 v7
    ============================================================ */
 
@@ -70,7 +70,7 @@ Promise.all([
   drawRisk(hhi, production);
   drawPrices(prices);
   drawCalculator(hhi, conductivity);
-  drawRadar(hhi, conductivity, prices);
+  drawRadar(hhi, conductivity);
 }).catch(err => {
   console.error("Data load error:", err);
   document.body.insertAdjacentHTML("afterbegin",
@@ -245,6 +245,19 @@ function drawMap(production, world) {
       });
   });
 
+  // --- Flow toggle button ---
+  const flowBtn = controls.append("button")
+    .attr("class", "mc-btn mc-btn-flow")
+    .html(`<span style="margin-right:6px;">⇢</span>Show flows`)
+    .on("click", function() {
+      flowsVisible = !flowsVisible;
+      d3.select(this).classed("active", flowsVisible)
+        .html(flowsVisible
+          ? `<span style="margin-right:6px;">⇢</span>Hide flows`
+          : `<span style="margin-right:6px;">⇢</span>Show flows`);
+      if (flowsVisible) drawFlows(currentMaterial);
+      else clearFlows();
+    });
 
   // --- SVG layers ---
   // Ocean
@@ -488,7 +501,7 @@ function drawRisk(hhi, production) {
 
   const x = d3.scaleLinear().domain([0, 28]).range([0, iw]);
   const y = d3.scaleLinear().domain([0, 5500]).range([ih, 0]);
-  const FIXED_R = 20;
+  const r = d3.scaleSqrt().domain([0, d3.max(data, d => d.total)]).range([6, 32]);
 
   // High-risk / low-risk zones
   g.append("rect")
@@ -508,27 +521,24 @@ function drawRisk(hhi, production) {
     .attr("stroke-dasharray", "4,4")
     .attr("stroke-width", 1);
 
-  // g.append("text")
-  //   .attr("x", 5).attr("y", y(2500) - 6)
-  //   .attr("text-anchor", "start")
-  //   .attr("font-family", "JetBrains Mono, monospace")
-  //   .attr("font-size", 14)
-  //   .attr("fill", "#b5482c")
-  //   .text("HHI = 2,500 · highly concentrated threshold");
+  g.append("text")
+    .attr("x", 5).attr("y", y(2500) - 6)
+    .attr("text-anchor", "start")
+    .attr("font-family", "JetBrains Mono, monospace")
+    .attr("font-size", 14)
+    .attr("fill", "#b5482c")
+    .text("HHI = 2,500 · highly concentrated threshold");
 
   // Gridlines
   g.append("g").attr("class","grid")
-    .call(d3.axisLeft(y).ticks(6).tickSize(-iw).tickFormat(""))
-    .attr("fill", "#f5efe0");
+    .call(d3.axisLeft(y).ticks(6).tickSize(-iw).tickFormat(""));
 
   // Axes
   g.append("g").attr("class","axis")
     .attr("transform",`translate(0,${ih})`)
-    .attr("fill", "#f5efe0")
     .call(d3.axisBottom(x).ticks(7))
     .call(s => s.select(".domain").remove());
   g.append("g").attr("class","axis")
-    .attr("fill", "#f5efe0")
     .call(d3.axisLeft(y).ticks(6).tickFormat(d3.format(",")))
     .call(s => s.select(".domain").remove());
 
@@ -537,7 +547,7 @@ function drawRisk(hhi, production) {
     .attr("x", iw / 2).attr("y", ih + 44)
     .attr("text-anchor", "middle")
     .attr("font-family", "Inter, sans-serif")
-    .attr("font-size", 20).attr("fill", "#f5efe0")
+    .attr("font-size", 20).attr("fill", "#4a4f54")
     .text("Number of producing countries");
 
   g.append("text")
@@ -545,7 +555,7 @@ function drawRisk(hhi, production) {
     .attr("x", -ih / 2).attr("y", -70)
     .attr("text-anchor", "middle")
     .attr("font-family", "Inter, sans-serif")
-    .attr("font-size", 20).attr("fill", "#f5efe0")
+    .attr("font-size", 20).attr("fill", "#4a4f54")
     .text("HHI concentration score");
 
   // Bubbles
@@ -574,7 +584,7 @@ function drawRisk(hhi, production) {
       hideTip();
     })
     .transition().duration(900).delay((d,i) => i * 120)
-    .attr("r", FIXED_R);
+    .attr("r", d => r(d.total));
 
   // Per-material label placement to avoid bubble/line collisions.
   // "above" = above bubble; "below" = below bubble; offset tweaks horizontal.
@@ -590,7 +600,9 @@ function drawRisk(hhi, production) {
     .attr("x", d => x(d.producers) + (LABEL_POS[d.material]?.dx || 0))
     .attr("y", d => {
       const pos = LABEL_POS[d.material] || { side: "above" };
-      return pos.side === "above" ? y(d.hhi) - FIXED_R - 8 : y(d.hhi) + FIXED_R + 18;
+      const rad = r(d.total);
+      // const rad = 10;
+      return pos.side === "above" ? y(d.hhi) - rad - 8 : y(d.hhi) + rad + 18;
     })
     .attr("text-anchor", "middle")
     .attr("font-family", "Fraunces, serif")
@@ -604,10 +616,9 @@ function drawRisk(hhi, production) {
 
   // Zone labels
   g.append("text")
-    .attr("x", 16).attr("y", 15)
+    .attr("x", 16).attr("y", 20)
     .attr("font-family", "JetBrains Mono, monospace")
     .attr("font-size", 14)
-    .attr("font-weight", 750)
     .attr("fill", "#b5482c")
     .attr("letter-spacing", "0.1em")
     .text("HIGH CONCENTRATION RISK");
@@ -617,12 +628,9 @@ function drawRisk(hhi, production) {
     .attr("text-anchor", "end")
     .attr("font-family", "JetBrains Mono, monospace")
     .attr("font-size", 14)
-    .attr("font-weight", 750)
     .attr("fill", "#5b8c5a")
     .attr("letter-spacing", "0.1em")
     .text("LOW CONCENTRATION RISK");
-
-
 }
 
 /* ============================================================
@@ -800,25 +808,6 @@ function drawCalculator(hhi, conductivity) {
   const hhiMap = new Map(hhi.map(d => [d.material, d.hhi]));
   const maxHHI = d3.max(hhi, d => d.hhi);
 
-  // Material costs from USGS unit values (most recent available year)
-  // Source: prices.csv — same dataset as Section 5 price chart
-  const MATERIAL_COSTS = {
-    "Lithium (Li)":        { price: 6200, year: 2021 },
-    "Rare Earths (La, Y)": { price: 5130, year: 2020 },
-    "Zirconium (Zr)":      { price: 1450, year: 2021 },
-    "Phosphate (P)":       { price: 103,  year: 2022 },
-    "Sulfur (S)":          { price: 178,  year: 2022 }
-  };
-
-  // Material icons used in bars and weights panel
-  const ICONS = {
-    "Lithium (Li)":        "🔋",
-    "Rare Earths (La, Y)": "🔭",
-    "Zirconium (Zr)":      "✈️",
-    "Sulfur (S)":          "🌋",
-    "Phosphate (P)":       "🌾"
-  };
-
   // Index conductivity by family for O(1) lookup; null if file missing
   const condMap = conductivity
     ? new Map(conductivity.map(d => [d.family, d]))
@@ -860,21 +849,28 @@ function drawCalculator(hhi, conductivity) {
   });
 
   function render(chem) {
+    // Normalize weights so they sum to 1 across measured materials
     const total = d3.sum(Object.values(chem.weights));
     const normWeights = Object.fromEntries(
       Object.entries(chem.weights).map(([k, v]) => [k, v / total])
     );
 
+    // Composite HHI = Σ (normalized weight × material HHI)
     const compHHI = d3.sum(Object.entries(normWeights)
       .map(([mat, w]) => w * hhiMap.get(mat)));
 
-    let band, bandColor;
-    if (compHHI < 1500)      { band = "Low risk";      bandColor = "#5b8c5a"; }
-    else if (compHHI < 2500) { band = "Moderate risk"; bandColor = "#e6b34a"; }
-    else                     { band = "High risk";     bandColor = "#b5482c"; }
+    // Scale to 0–100 risk score (0 = zero concentration, 100 = all from one source = HHI 10000)
+    const scorePct = Math.round((compHHI / 10000) * 100);
 
+    // Risk band
+    let band, bandColor;
+    if (compHHI < 1500)      { band = "Low risk";       bandColor = "#5b8c5a"; }
+    else if (compHHI < 2500) { band = "Moderate risk";  bandColor = "#e6b34a"; }
+    else                     { band = "High risk";      bandColor = "#b5482c"; }
+
+    // Weights panel
     const weightsHTML = Object.entries(normWeights)
-      .map(([mat, w]) => `${ICONS[mat] || "•"} ${mat}: <span style="color:${MATERIAL_COLORS[mat]}">${Math.round(w * 100)}%</span>`)
+      .map(([mat, w]) => `${mat}: <span style="color:${MATERIAL_COLORS[mat]}">${Math.round(w * 100)}%</span>`)
       .join("<br>");
 
     d3.select("#calc-weights")
@@ -884,219 +880,123 @@ function drawCalculator(hhi, conductivity) {
              <div style="margin-top:12px;">WEIGHTING (MASS FRACTION, NORMALIZED):</div>
              ${weightsHTML}`);
 
+    // Output panel
     const out = d3.select("#calc-output");
     out.html("");
-
-    // ---- BLOCK 1: Risk ----
     out.append("div").attr("class","calc-score-label").text("COMPOSITE SUPPLY-CHAIN RISK");
     out.append("div").attr("class","calc-score")
       .style("color", bandColor)
-      .text(`${d3.format(",")(Math.round(compHHI))}`);
-    out.append("div").attr("class","calc-score-desc").text(band);
+      .text(` ${d3.format(",")(Math.round(compHHI))}`);
+      
+    out.append("div").attr("class","calc-score-desc")
+      .text(`${band}`);
+
     out.append("div").attr("class","calc-breakdown-title")
       .text("CONTRIBUTION TO RISK BY MATERIAL");
 
+    // Sort contributions by descending HHI contribution
     const contribs = Object.entries(normWeights).map(([mat, w]) => ({
       mat, weight: w, hhi: hhiMap.get(mat),
       contribution: w * hhiMap.get(mat)
     })).sort((a, b) => b.contribution - a.contribution);
 
+    const maxContrib = d3.max(contribs, d => d.contribution);
+
     contribs.forEach(c => {
-      const pct = Math.round((c.contribution / compHHI) * 100);
       const row = out.append("div").attr("class","calc-bar-row");
-      const label = row.append("div").attr("class","calc-bar-label").style("font-size","15px");
-      label.append("span").html(`${ICONS[c.mat] || ""} ${c.mat}`);
-      label.append("span")
-        .style("font-family","var(--font-mono)")
-        .style("color", MATERIAL_COLORS[c.mat])
-        .style("font-size","15px")
-        .text(`${pct}%`);
+      const label = row.append("div").attr("class","calc-bar-label");
+      label.append("span").text(c.mat);
+      label.append("span").text(`HHI ${d3.format(",")(c.hhi)} × ${Math.round(c.weight*100)}%`);
       const track = row.append("div").attr("class","calc-bar-track");
-      track.append("div").attr("class","calc-bar-fill")
+      track.append("div")
+        .attr("class","calc-bar-fill")
         .style("background", MATERIAL_COLORS[c.mat])
-        .style("width","0%")
+        .style("width", "0%")
         .transition().duration(700)
-        .style("width",`${pct}%`);
+        .style("width", `${(c.contribution / maxContrib) * 100}%`);
     });
 
-    // ---- BLOCK 2: Cost ----
-    const weightedCost = d3.sum(Object.entries(normWeights).map(([mat, w]) => {
-      const c = MATERIAL_COSTS[mat];
-      return c ? w * c.price : 0;
-    }));
-
-    out.append("div").attr("class","calc-divider");
-    out.append("div").attr("class","calc-score-label").text("ESTIMATED MATERIAL COST");
-    out.append("div").attr("class","calc-score")
-      .style("color","#5a5f64")
-      .style("font-size","44px")
-      .html(`$${d3.format(",")(Math.round(weightedCost))} <span style="font-size:18px;color:var(--ink-soft);font-weight:400;">/tonne (weighted avg.)</span>`);
-    out.append("div").attr("class","calc-score-desc")
-      .style("margin-bottom","16px")
-      .text("Based on USGS unit values");
-    out.append("div").attr("class","calc-breakdown-title")
-      .text("COST CONTRIBUTION BY MATERIAL");
-
-    const costContribs = Object.entries(normWeights)
-      .filter(([mat]) => MATERIAL_COSTS[mat])
-      .map(([mat, w]) => ({
-        mat, weight: w,
-        price: MATERIAL_COSTS[mat].price,
-        contribution: w * MATERIAL_COSTS[mat].price
-      }))
-      .sort((a, b) => b.contribution - a.contribution);
-
-    const totalCost = d3.sum(costContribs, d => d.contribution);
-
-    costContribs.forEach(c => {
-      const pct = Math.round((c.contribution / totalCost) * 100);
-      const row = out.append("div").attr("class","calc-bar-row");
-      const label = row.append("div").attr("class","calc-bar-label").style("font-size","15px");
-      label.append("span").html(`${ICONS[c.mat] || ""} ${c.mat}`);
-      label.append("span")
-        .style("font-family","var(--font-mono)")
-        .style("color","var(--ink-soft)")
-        .style("font-size","13px")
-        .text(`$${d3.format(",")(c.price)}/t · ${pct}%`);
-      const track = row.append("div").attr("class","calc-bar-track");
-      track.append("div").attr("class","calc-bar-fill")
-        .style("background", MATERIAL_COLORS[c.mat])
-        .style("opacity","0.7")
-        .style("width","0%")
-        .transition().duration(700)
-        .style("width",`${pct}%`);
-    });
-
-    out.append("div").attr("class","calc-source")
-      .text("Source: USGS unit values. Most recent available year per material (2020–2022).");
-
-    // ---- BLOCK 3: Conductivity ----
+    // -------- Performance (ionic conductivity) panel --------
     if (condMap && condMap.has(chem.family)) {
       const c = condMap.get(chem.family);
       const band = condBand(c.medianLog);
 
-      out.append("div").attr("class","calc-divider");
+      out.append("div").attr("class", "calc-divider");
+
       out.append("div").attr("class","calc-score-label").text("TYPICAL IONIC CONDUCTIVITY");
+
       out.append("div").attr("class","calc-score")
         .style("color", band.color)
-        .style("font-size","44px")
+        .style("font-size", "44px")
         .html(fmtSci(c.medianLog) + ` <span style="font-size:20px;color:var(--ink-soft);font-weight:400;">S/cm</span>`);
+
       out.append("div").attr("class","calc-score-desc")
         .text(`${band.label} · median of ${c.n} measured ${chem.family} electrolytes`);
-      out.append("div").attr("class","calc-iqr")
+
+      // IQR range indicator — shows the spread
+      const iqrNote = out.append("div")
+        .attr("class", "calc-iqr")
         .html(`<span style="font-family:var(--font-mono);font-size:13px;letter-spacing:0.1em;color:var(--ink-soft);">RANGE</span><br>
                <span style="font-family:var(--font-mono);font-size:15px;color:var(--ink-soft);">
                ${fmtSci(c.p25Log)} — ${fmtSci(c.p75Log)} S/cm</span>`);
+
       out.append("div").attr("class","calc-source")
         .html(`Source: OBELiX dataset (Therrien et al. 2025), ${c.n} room-temperature measurements classified as ${chem.family}-family by composition.`);
     }
   }
- render(CHEMISTRIES[0]);
+
+  render(CHEMISTRIES[0]);
 }
 
 /* ============================================================
-   6. RADAR CHART — Section 2 chemistry comparison
+   6. RADAR CHART — triangle, 3 data-driven axes
    ============================================================ */
-function drawRadar(hhi, conductivity, prices) {
+function drawRadar(hhi, conductivity) {
   const container = d3.select("#chart-radar");
   if (container.empty()) return;
 
   const hhiMap = new Map(hhi.map(d => [d.material, d.hhi]));
-
   const WEIGHTS = {
     llzo: { "Lithium (Li)": 0.08, "Rare Earths (La, Y)": 0.52, "Zirconium (Zr)": 0.22 },
     lpsc: { "Lithium (Li)": 0.17, "Sulfur (S)": 0.39, "Phosphate (P)": 0.15 },
     lagp: { "Lithium (Li)": 0.03, "Phosphate (P)": 0.28 }
   };
-
   const COSTS = {
     "Lithium (Li)": 6200, "Rare Earths (La, Y)": 5130,
     "Zirconium (Zr)": 1450, "Phosphate (P)": 103, "Sulfur (S)": 178
   };
 
-  function compositeHHI(weights) {
-    const t = d3.sum(Object.values(weights));
-    const n = Object.fromEntries(Object.entries(weights).map(([k,v]) => [k, v/t]));
-    return d3.sum(Object.entries(n).map(([mat, w]) => w * (hhiMap.get(mat) || 0)));
+  function compositeHHI(w) {
+    const t = d3.sum(Object.values(w));
+    const n = Object.fromEntries(Object.entries(w).map(([k,v]) => [k, v/t]));
+    return d3.sum(Object.entries(n).map(([mat, v]) => v * (hhiMap.get(mat) || 0)));
   }
-
-  function weightedCost(weights) {
-    const t = d3.sum(Object.values(weights));
-    const n = Object.fromEntries(Object.entries(weights).map(([k,v]) => [k, v/t]));
-    return d3.sum(Object.entries(n).map(([mat, w]) => w * (COSTS[mat] || 0)));
+  function weightedCost(w) {
+    const t = d3.sum(Object.values(w));
+    const n = Object.fromEntries(Object.entries(w).map(([k,v]) => [k, v/t]));
+    return d3.sum(Object.entries(n).map(([mat, v]) => v * (COSTS[mat] || 0)));
   }
-
-  // Price stability: coefficient of variation (lower volatility = higher score)
-  const pricesByMat = d3.group(prices, d => d.material);
-  function volatilityScore(matName) {
-    const vals = (pricesByMat.get(matName) || []).map(d => d.value);
-    if (vals.length < 2) return 5;
-    const mean = d3.mean(vals);
-    const std = Math.sqrt(d3.mean(vals.map(v => (v - mean) ** 2)));
-    return Math.max(0, Math.min(10, (1 - (std / mean)) * 10));
-  }
-  function compositeVolatility(weights) {
-    const t = d3.sum(Object.values(weights));
-    const n = Object.fromEntries(Object.entries(weights).map(([k,v]) => [k, v/t]));
-    return d3.sum(Object.entries(n).map(([mat, w]) => w * volatilityScore(mat)));
-  }
-
   const condMap = conductivity ? new Map(conductivity.map(d => [d.family, d])) : null;
   function condScore(family) {
     if (!condMap || !condMap.has(family)) return 5;
-    const log = condMap.get(family).medianLog;
-    return Math.max(0, Math.min(10, ((log + 6) / 4) * 10));
+    return Math.max(0, Math.min(10, ((condMap.get(family).medianLog + 6) / 4) * 10));
   }
 
-  const hhiLLZO = compositeHHI(WEIGHTS.llzo);
-  const hhiLPSC = compositeHHI(WEIGHTS.lpsc);
-  const hhiLAGP = compositeHHI(WEIGHTS.lagp);
+  const hhiLLZO = compositeHHI(WEIGHTS.llzo), hhiLPSC = compositeHHI(WEIGHTS.lpsc), hhiLAGP = compositeHHI(WEIGHTS.lagp);
   const maxHHI = Math.max(hhiLLZO, hhiLPSC, hhiLAGP);
-
-  const costLLZO = weightedCost(WEIGHTS.llzo);
-  const costLPSC = weightedCost(WEIGHTS.lpsc);
-  const costLAGP = weightedCost(WEIGHTS.lagp);
+  const costLLZO = weightedCost(WEIGHTS.llzo), costLPSC = weightedCost(WEIGHTS.lpsc), costLAGP = weightedCost(WEIGHTS.lagp);
   const maxCost = Math.max(costLLZO, costLPSC, costLAGP);
 
+  const AXES = ["Ionic Conductivity", "Cost Efficiency", "Geographic Distribution"];
+  const N = 3;
   const CHEMDATA = [
-    {
-      name: "Oxide · LLZO", color: "#b5482c",
-      scores: {
-        "Ionic\nConductivity":      Math.round(condScore("oxide")),
-        "Cost\nEfficiency":         Math.round((1 - costLLZO / maxCost) * 10),
-        "Geographic\nDistribution": Math.round((1 - hhiLLZO / maxHHI) * 10),
-        "Price\nStability":         Math.round(compositeVolatility(WEIGHTS.llzo))
-      }
-    },
-    {
-      name: "Sulfide · Li₆PS₅Cl", color: "#e6b34a",
-      scores: {
-        "Ionic\nConductivity":      Math.round(condScore("sulfide")),
-        "Cost\nEfficiency":         Math.round((1 - costLPSC / maxCost) * 10),
-        "Geographic\nDistribution": Math.round((1 - hhiLPSC / maxHHI) * 10),
-        "Price\nStability":         Math.round(compositeVolatility(WEIGHTS.lpsc))
-      }
-    },
-    {
-      name: "Phosphate · LAGP", color: "#A689E1",
-      scores: {
-        "Ionic\nConductivity":      Math.round(condScore("phosphate")),
-        "Cost\nEfficiency":         Math.round((1 - costLAGP / maxCost) * 10),
-        "Geographic\nDistribution": Math.round((1 - hhiLAGP / maxHHI) * 10),
-        "Price\nStability":         Math.round(compositeVolatility(WEIGHTS.lagp))
-      }
-    }
+    { name: "Oxide · LLZO",        color: "#b5482c", scores: [Math.round(condScore("oxide")),     Math.round((1-costLLZO/maxCost)*10), Math.round((1-hhiLLZO/maxHHI)*10)] },
+    { name: "Sulfide · Li₆PS₅Cl",  color: "#e6b34a", scores: [Math.round(condScore("sulfide")),   Math.round((1-costLPSC/maxCost)*10), Math.round((1-hhiLPSC/maxHHI)*10)] },
+    { name: "Phosphate · LAGP",     color: "#A689E1", scores: [Math.round(condScore("phosphate")), Math.round((1-costLAGP/maxCost)*10), Math.round((1-hhiLAGP/maxHHI)*10)] }
   ];
 
-  const AXES = Object.keys(CHEMDATA[0].scores);
-  const N = AXES.length;
-  const W = 560, H = 480;
-  const cx = W / 2, cy = H / 2 - 10;
-  const maxR = 160;
-
-  const svg = container.append("svg")
-    .attr("viewBox", `0 0 ${W} ${H}`)
-    .attr("preserveAspectRatio", "xMidYMid meet");
+  const W = 640, H = 500, cx = 290, cy = 240, maxR = 170;
+  const svg = container.append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("preserveAspectRatio", "xMidYMid meet");
   const g = svg.append("g");
 
   function angle(i) { return (Math.PI * 2 * i / N) - Math.PI / 2; }
@@ -1106,74 +1006,49 @@ function drawRadar(hhi, conductivity, prices) {
   // Grid rings
   [2, 4, 6, 8, 10].forEach(level => {
     const pts = AXES.map((_, i) => [px(level, i), py(level, i)]);
-    g.append("polygon")
-      .attr("points", pts.map(p => p.join(",")).join(" "))
-      .attr("fill", "none")
+    g.append("polygon").attr("points", pts.map(p => p.join(",")).join(" "))
+      .attr("fill", level % 4 === 0 ? "#f5f1e6" : "none")
       .attr("stroke", level === 10 ? "#9ea3a8" : "#d8d2c3")
       .attr("stroke-width", level === 10 ? 1.5 : 0.8);
-    g.append("text")
-      .attr("x", cx).attr("y", cy - (level / 10) * maxR - 4)
-      .attr("text-anchor", "middle")
-      .attr("font-family", "JetBrains Mono, monospace")
-      .attr("font-size", 9).attr("fill", "#b8b3a4")
-      .text(level);
+    g.append("text").attr("x", px(level, 0) + 6).attr("y", py(level, 0) + 4)
+      .attr("font-family", "JetBrains Mono, monospace").attr("font-size", 9).attr("fill", "#b8b3a4").text(level);
   });
 
-  // Axis spokes and labels
+  // Spokes + labels
   AXES.forEach((axis, i) => {
-    g.append("line")
-      .attr("x1", cx).attr("y1", cy)
-      .attr("x2", px(10, i)).attr("y2", py(10, i))
-      .attr("stroke", "#d8d2c3").attr("stroke-width", 1);
-
-    const labelR = maxR + 28;
-    const lx = cx + labelR * Math.cos(angle(i));
-    const ly = cy + labelR * Math.sin(angle(i));
-    const lines = axis.split("\n");
-    const textEl = g.append("text")
-      .attr("x", lx).attr("y", ly - (lines.length - 1) * 7)
-      .attr("text-anchor", "middle")
-      .attr("font-family", "Inter, sans-serif")
-      .attr("font-size", 13).attr("fill", "#4a4f54")
-      .attr("font-weight", 600);
-    lines.forEach((line, li) => {
-      textEl.append("tspan").attr("x", lx).attr("dy", li === 0 ? 0 : 14).text(line);
-    });
+    g.append("line").attr("x1", cx).attr("y1", cy).attr("x2", px(10,i)).attr("y2", py(10,i))
+      .attr("stroke", "#c8c3b4").attr("stroke-width", 1.2);
+    const lr = maxR + 32, lx = cx + lr * Math.cos(angle(i)), ly = cy + lr * Math.sin(angle(i));
+    g.append("text").attr("x", lx).attr("y", ly).attr("text-anchor", "middle").attr("dominant-baseline", "middle")
+      .attr("font-family", "Inter, sans-serif").attr("font-size", 14).attr("fill", "#1a1e21").attr("font-weight", 700).text(axis);
+    const nr = maxR + 56, nx = cx + nr * Math.cos(angle(i)), ny = cy + nr * Math.sin(angle(i));
+    g.append("text").attr("x", nx).attr("y", ny).attr("text-anchor", "middle").attr("dominant-baseline", "middle")
+      .attr("font-family", "JetBrains Mono, monospace").attr("font-size", 9).attr("fill", "#9ea3a8").attr("font-style", "italic").text("higher = better");
   });
 
-  // Chemistry polygons
-  CHEMDATA.forEach(chem => {
-    const vals = AXES.map(a => chem.scores[a]);
-    const pts = vals.map((v, i) => [px(v, i), py(v, i)]);
-    g.append("polygon")
-      .attr("points", pts.map(p => p.join(",")).join(" "))
-      .attr("fill", chem.color).attr("fill-opacity", 0.15)
-      .attr("stroke", chem.color).attr("stroke-width", 2.5)
-      .attr("stroke-linejoin", "round")
-      .on("mouseenter", function() { d3.select(this).attr("fill-opacity", 0.35); })
-      .on("mouseleave", function() { d3.select(this).attr("fill-opacity", 0.15); });
+  // Polygons + dots
+  [...CHEMDATA].reverse().forEach(chem => {
+    const pts = chem.scores.map((v, i) => [px(v, i), py(v, i)]);
+    g.append("polygon").attr("points", pts.map(p => p.join(",")).join(" "))
+      .attr("fill", chem.color).attr("fill-opacity", 0.18).attr("stroke", chem.color).attr("stroke-width", 2.5).attr("stroke-linejoin", "round")
+      .on("mouseenter", function() { d3.select(this).attr("fill-opacity", 0.40); })
+      .on("mouseleave", function() { d3.select(this).attr("fill-opacity", 0.18); });
     pts.forEach(([vx, vy]) => {
-      g.append("circle").attr("cx", vx).attr("cy", vy).attr("r", 4)
-        .attr("fill", chem.color).attr("stroke", "#fff").attr("stroke-width", 1.5);
+      g.append("circle").attr("cx", vx).attr("cy", vy).attr("r", 5)
+        .attr("fill", chem.color).attr("stroke", "#fbf9f4").attr("stroke-width", 1.5);
     });
   });
 
   // Legend
-  const legX = W - 160, legY = 30;
+  const legX = W - 155, legY = 60;
   CHEMDATA.forEach((chem, i) => {
-    const ly = legY + i * 26;
-    g.append("circle").attr("cx", legX).attr("cy", ly).attr("r", 7)
-      .attr("fill", chem.color).attr("fill-opacity", 0.7);
-    g.append("text").attr("x", legX + 14).attr("y", ly + 4)
-      .attr("font-family", "Inter, sans-serif").attr("font-size", 13)
-      .attr("fill", "#4a4f54").attr("font-weight", 500).text(chem.name);
+    const ly = legY + i * 32;
+    g.append("rect").attr("x", legX-4).attr("y", ly-10).attr("width", 150).attr("height", 24).attr("rx", 3).attr("fill", chem.color).attr("fill-opacity", 0.12);
+    g.append("circle").attr("cx", legX+8).attr("cy", ly+2).attr("r", 7).attr("fill", chem.color).attr("fill-opacity", 0.85);
+    g.append("text").attr("x", legX+22).attr("y", ly+7).attr("font-family", "Inter, sans-serif").attr("font-size", 13).attr("fill", "#1a1e21").attr("font-weight", 500).text(chem.name);
   });
 
-  // Source note
   g.append("text").attr("x", 8).attr("y", H - 8)
-    .attr("font-family", "Inter, sans-serif").attr("font-size", 10)
-    .attr("fill", "#b8b3a4").attr("font-style", "italic")
-    .text("All axes from data: OBELiX, USGS prices.csv, hhi.csv");
+    .attr("font-family", "Inter, sans-serif").attr("font-size", 10).attr("fill", "#b8b3a4").attr("font-style", "italic")
+    .text("Scores 0–10: OBELiX conductivity · USGS unit values · USGS HHI");
 }
-
- 
