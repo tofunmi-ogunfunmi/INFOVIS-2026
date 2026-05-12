@@ -846,6 +846,7 @@ function drawCalculator(hhi, conductivity) {
         d3.select(this).classed("active", true);
         render(CHEMISTRIES.find(x => x.id === this.dataset.id));
       });
+       render(CHEMISTRIES[0]);
   });
 
   function render(chem) {
