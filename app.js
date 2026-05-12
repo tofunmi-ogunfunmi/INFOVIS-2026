@@ -1023,7 +1023,7 @@ function drawRadar(hhi, conductivity) {
       .attr("font-family", "Inter, sans-serif").attr("font-size", 14).attr("fill", "#1a1e21").attr("font-weight", 700).text(axis);
     const nr = maxR + 56, nx = cx + nr * Math.cos(angle(i)), ny = cy + nr * Math.sin(angle(i));
     g.append("text").attr("x", nx).attr("y", ny).attr("text-anchor", "middle").attr("dominant-baseline", "middle")
-      .attr("font-family", "JetBrains Mono, monospace").attr("font-size", 9).attr("fill", "#9ea3a8").attr("font-style", "italic").text("higher = better");
+      .attr("font-family", "JetBrains Mono, monospace").attr("font-size", 9).attr("fill", "#9ea3a8").attr("font-style", "italic")i'i';
   });
 
   // Polygons + dots
