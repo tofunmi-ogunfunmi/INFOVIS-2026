@@ -997,13 +997,13 @@ function drawCalculator(hhi, conductivity) {
 /* ============================================================
    6. RADAR CHART — Section 2 chemistry comparison
    ============================================================ */
+/* 6. RADAR CHART */
 function drawRadar(hhi, conductivity, prices) {
   const container = d3.select("#chart-radar");
   if (container.empty()) return;
   container.selectAll("*").remove();
 
-  // --- Scoring Logic ---
-// 1. Calculate Average YoY Volatility for each element
+  // --- 1. Scoring Logic: YoY Volatility ---
   function getStabilityScore(materialName) {
     if (!prices) return 5;
     
@@ -1014,44 +1014,18 @@ function drawRadar(hhi, conductivity, prices) {
                             
     if (matPrices.length < 2) return 5;
     
-    // Calculate the absolute percentage change from year to year
+    // Calculate YoY absolute percentage change
     let yoyChanges = [];
     for (let i = 1; i < matPrices.length; i++) {
       const prev = matPrices[i-1];
       const curr = matPrices[i];
-      if (prev > 0) {
-        yoyChanges.push(Math.abs((curr - prev) / prev));
-      }
+      if (prev > 0) yoyChanges.push(Math.abs((curr - prev) / prev));
     }
     
-    // Find the average YoY change. (Higher = more jagged/volatile)
-    const avgVolatility = d3.mean(yoyChanges);
-    
-    // Map to 0-10: 0% volatility = 10 score. 
-    // The 4.0 multiplier controls how harshly we penalize jaggedness.
+    // Map to 0-10: Lower volatility = Higher score
+    const avgVolatility = d3.mean(yoyChanges) || 0;
     return Math.max(0, Math.min(10, (1 / (1 + avgVolatility * 4.0)) * 10));
   }
-
-  // 2. Blend the element scores based on their weight in the chemistry
-  const hhiMap = new Map(hhi.map(d => [d.material, d.hhi]));
-  const WEIGHTS = {
-    llzo: { "Lithium (Li)": 0.08, "Rare Earths (La, Y)": 0.52, "Zirconium (Zr)": 0.22 },
-    lpsc: { "Lithium (Li)": 0.17, "Sulfur (S)": 0.39, "Phosphate (P)": 0.15 },
-    lagp: { "Lithium (Li)": 0.03, "Phosphate (P)": 0.28 }
-  };
-
-  const getCompStability = (w) => d3.sum(Object.entries(w).map(([mat, v]) => (v/d3.sum(Object.values(w))) * getStabilityScore(mat)));
-  const getCompHHI = (w) => d3.sum(Object.entries(w).map(([mat, v]) => (v/d3.sum(Object.values(w))) * (hhiMap.get(mat) || 0)));
-
-  const hhiScores = [getCompHHI(WEIGHTS.llzo), getCompHHI(WEIGHTS.lpsc), getCompHHI(WEIGHTS.lagp)];
-  const maxHHI = Math.max(...hhiScores);
-
-  // 3. Update CHEMDATA to use getCompStability again
-  const CHEMDATA = [
-    { name: "Oxide · LLZO", color: MATERIAL_COLORS["Rare Earths (La, Y)"], scores: [condScore("oxide"), getCompStability(WEIGHTS.llzo), (1 - hhiScores[0]/maxHHI)*10] },
-    { name: "Sulfide · Li₆PS₅Cl", color: MATERIAL_COLORS["Sulfur (S)"], scores: [condScore("sulfide"), getCompStability(WEIGHTS.lpsc), (1 - hhiScores[1]/maxHHI)*10] },
-    { name: "Phosphate · LAGP", color: MATERIAL_COLORS["Phosphate (P)"], scores: [condScore("phosphate"), getCompStability(WEIGHTS.lagp), (1 - hhiScores[2]/maxHHI)*10] }
-  ];
 
   function condScore(family) {
     if (!conductivity) return 5;
@@ -1075,7 +1049,7 @@ function drawRadar(hhi, conductivity, prices) {
 
   const AXES = [
     { name: "Ionic Conductivity", desc: "10 = High conductivity (10⁻² S/cm), 0 = Poor (10⁻⁵ S/cm)" },
-    { name: "Price Stability", desc: "10 = Constant prices (Low CV), 0 = Volatile prices (High CV)" },
+    { name: "Price Stability", desc: "10 = Stable (Low YoY Volatility), 0 = Spiky (High YoY Volatility)" },
     { name: "Geographic Distribution", desc: "10 = Globally diverse production, 0 = High monopoly risk (HHI)" }
   ];
 
@@ -1085,7 +1059,7 @@ function drawRadar(hhi, conductivity, prices) {
     { name: "Phosphate · LAGP", color: MATERIAL_COLORS["Phosphate (P)"], scores: [condScore("phosphate"), getCompStability(WEIGHTS.lagp), (1 - hhiScores[2]/maxHHI)*10] }
   ];
 
-  // --- Visual Config ---
+  // --- 2. Visual Config & Drawing Logic ---
   const W = 640, H = 500, cx = 290, cy = 250, maxR = 160;
   const svg = container.append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("preserveAspectRatio", "xMidYMid meet");
   const g = svg.append("g");
@@ -1117,9 +1091,11 @@ function drawRadar(hhi, conductivity, prices) {
     pts.forEach(p => g.append("circle").attr("cx", p[0]).attr("cy", p[1]).attr("r", 5).attr("fill", chem.color).attr("stroke", "#fbf9f4"));
   });
 
-  // --- NEW LEGEND ---
+  // --- 3. LEGEND ---
   const legend = g.append("g").attr("transform", `translate(${W - 160}, 20)`);
-  CHEMDATA.forEach((chem, i) => {
+  
+  // Reverse back so the legend reads top-to-bottom logically
+  CHEMDATA.reverse().forEach((chem, i) => {
     const row = legend.append("g").attr("transform", `translate(0, ${i * 25})`);
     row.append("rect").attr("width", 12).attr("height", 12).attr("fill", chem.color).attr("rx", 2);
     row.append("text").attr("x", 18).attr("y", 10).attr("font-size", 12).attr("font-weight", 500).attr("fill", "#1a1e21").text(chem.name);
