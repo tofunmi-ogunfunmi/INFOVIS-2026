@@ -1058,8 +1058,8 @@ function drawRadar(hhi, conductivity, prices) {
   // Added "sub" text to make the methodology explicitly clear on the chart
    const AXES = [
        { name: "Ionic Conductivity", sub: "Calculated via Median Log S/cm", desc: "10 = High conductivity (10⁻³ S/cm), 0 = Poor (10⁻⁵ S/cm)" },
-       { name: "Price Stability", sub: "Calculated via Median YoY % Change", desc: "10 = Stable (Low Median YoY Change), 0 = Spiky (High Median YoY Change)" },
-       { name: "Geographic Distribution", sub: "Calculated via Inverse HHI", desc: "10 = Globally diverse production, 0 = High monopoly risk (HHI)" }
+       { name: "Price Stability", sub: "Calculated via Median Year over Year % Change", desc: "10 = Stable (Low Median YoY Change), 0 = Spiky (High Median YoY Change)" },
+       { name: "Geographic Distribution", sub: "Calculated via Inverse Market Concentration (HHI)", desc: "10 = Globally diverse production, 0 = High monopoly risk (HHI)" }
      ];
 
   const CHEMDATA = [
