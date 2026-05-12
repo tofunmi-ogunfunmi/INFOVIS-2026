@@ -1003,13 +1003,55 @@ function drawRadar(hhi, conductivity, prices) {
   container.selectAll("*").remove();
 
   // --- Scoring Logic ---
+// 1. Calculate Average YoY Volatility for each element
   function getStabilityScore(materialName) {
     if (!prices) return 5;
-    const matPrices = prices.filter(d => d.material === materialName).map(d => d.value);
+    
+    // Get chronological prices
+    const matPrices = prices.filter(d => d.material === materialName)
+                            .sort((a, b) => a.year - b.year)
+                            .map(d => d.value);
+                            
     if (matPrices.length < 2) return 5;
-    const mean = d3.mean(matPrices), stdDev = d3.deviation(matPrices);
-    return Math.max(0, Math.min(10, (1 / (1 + (stdDev / mean) * 4.0)) * 10));
+    
+    // Calculate the absolute percentage change from year to year
+    let yoyChanges = [];
+    for (let i = 1; i < matPrices.length; i++) {
+      const prev = matPrices[i-1];
+      const curr = matPrices[i];
+      if (prev > 0) {
+        yoyChanges.push(Math.abs((curr - prev) / prev));
+      }
+    }
+    
+    // Find the average YoY change. (Higher = more jagged/volatile)
+    const avgVolatility = d3.mean(yoyChanges);
+    
+    // Map to 0-10: 0% volatility = 10 score. 
+    // The 4.0 multiplier controls how harshly we penalize jaggedness.
+    return Math.max(0, Math.min(10, (1 / (1 + avgVolatility * 4.0)) * 10));
   }
+
+  // 2. Blend the element scores based on their weight in the chemistry
+  const hhiMap = new Map(hhi.map(d => [d.material, d.hhi]));
+  const WEIGHTS = {
+    llzo: { "Lithium (Li)": 0.08, "Rare Earths (La, Y)": 0.52, "Zirconium (Zr)": 0.22 },
+    lpsc: { "Lithium (Li)": 0.17, "Sulfur (S)": 0.39, "Phosphate (P)": 0.15 },
+    lagp: { "Lithium (Li)": 0.03, "Phosphate (P)": 0.28 }
+  };
+
+  const getCompStability = (w) => d3.sum(Object.entries(w).map(([mat, v]) => (v/d3.sum(Object.values(w))) * getStabilityScore(mat)));
+  const getCompHHI = (w) => d3.sum(Object.entries(w).map(([mat, v]) => (v/d3.sum(Object.values(w))) * (hhiMap.get(mat) || 0)));
+
+  const hhiScores = [getCompHHI(WEIGHTS.llzo), getCompHHI(WEIGHTS.lpsc), getCompHHI(WEIGHTS.lagp)];
+  const maxHHI = Math.max(...hhiScores);
+
+  // 3. Update CHEMDATA to use getCompStability again
+  const CHEMDATA = [
+    { name: "Oxide · LLZO", color: MATERIAL_COLORS["Rare Earths (La, Y)"], scores: [condScore("oxide"), getCompStability(WEIGHTS.llzo), (1 - hhiScores[0]/maxHHI)*10] },
+    { name: "Sulfide · Li₆PS₅Cl", color: MATERIAL_COLORS["Sulfur (S)"], scores: [condScore("sulfide"), getCompStability(WEIGHTS.lpsc), (1 - hhiScores[1]/maxHHI)*10] },
+    { name: "Phosphate · LAGP", color: MATERIAL_COLORS["Phosphate (P)"], scores: [condScore("phosphate"), getCompStability(WEIGHTS.lagp), (1 - hhiScores[2]/maxHHI)*10] }
+  ];
 
   function condScore(family) {
     if (!conductivity) return 5;
